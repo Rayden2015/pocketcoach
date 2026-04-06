@@ -1,0 +1,204 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:pocket_coach_mobile/config/api_config.dart';
+import 'package:pocket_coach_mobile/models/catalog_models.dart';
+import 'package:pocket_coach_mobile/models/continue_learning.dart';
+import 'package:pocket_coach_mobile/models/course_detail.dart';
+
+class ApiException implements Exception {
+  ApiException(this.statusCode, this.body, {this.message});
+
+  final int statusCode;
+  final String body;
+  final String? message;
+
+  @override
+  String toString() =>
+      message != null ? 'ApiException($statusCode): $message' : 'ApiException($statusCode): $body';
+}
+
+/// JSON client for Pocket Coach `/api/v1` (Sanctum).
+class PocketCoachApi {
+  PocketCoachApi({http.Client? httpClient, String? baseUrl})
+    : _client = httpClient ?? http.Client(),
+      _base = baseUrl ?? ApiConfig.baseUrl;
+
+  final http.Client _client;
+  final String _base;
+
+  Uri _u(String path) {
+    final b = _base.endsWith('/') ? _base.substring(0, _base.length - 1) : _base;
+    final p = path.startsWith('/') ? path : '/$path';
+    return Uri.parse('$b$p');
+  }
+
+  Map<String, String> _jsonHeaders(String? bearer) {
+    final h = <String, String>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    if (bearer != null && bearer.isNotEmpty) {
+      h['Authorization'] = 'Bearer $bearer';
+    }
+    return h;
+  }
+
+  Future<Map<String, dynamic>> loginWithGoogle({
+    required String idToken,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/auth/google'),
+      headers: _jsonHeaders(null),
+      body: jsonEncode({'id_token': idToken}),
+    );
+    return _decodeObject(res);
+  }
+
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/login'),
+      headers: _jsonHeaders(null),
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+    return _decodeObject(res);
+  }
+
+  Future<void> logout(String bearer) async {
+    final res = await _client.post(
+      _u('/v1/logout'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(res.statusCode, res.body);
+    }
+  }
+
+  Future<List<CatalogProgram>> fetchCatalog({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/catalog'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => CatalogProgram.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<CourseDetail> fetchCourse({
+    required String bearer,
+    required String tenantSlug,
+    required int courseId,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/courses/$courseId'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObjectOrThrow(res);
+    final data = map['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(res.statusCode, res.body, message: 'Invalid course payload');
+    }
+    return CourseDetail.fromJson(data);
+  }
+
+  Future<ContinueLearningPayload?> fetchContinue({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/continue'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data == null) {
+      return null;
+    }
+    if (data is! Map<String, dynamic>) {
+      return null;
+    }
+    return ContinueLearningPayload.fromJson(data);
+  }
+
+  Future<Map<String, dynamic>> updateLessonProgress({
+    required String bearer,
+    required String tenantSlug,
+    required int lessonId,
+    bool? completed,
+    int? positionSeconds,
+    String? notes,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (completed != null) {
+      payload['completed'] = completed;
+    }
+    if (positionSeconds != null) {
+      payload['position_seconds'] = positionSeconds;
+    }
+    if (notes != null) {
+      payload['notes'] = notes;
+    }
+    final res = await _client.put(
+      _u('/v1/tenants/$tenantSlug/lessons/$lessonId/progress'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(payload),
+    );
+    return _decodeObject(res);
+  }
+
+  dynamic _decode(http.Response res) {
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+    if (res.body.isEmpty) {
+      return null;
+    }
+    return jsonDecode(res.body) as dynamic;
+  }
+
+  Map<String, dynamic> _decodeObject(http.Response res) {
+    final v = _decode(res);
+    if (v is Map<String, dynamic>) {
+      return v;
+    }
+    throw ApiException(res.statusCode, res.body);
+  }
+
+  Map<String, dynamic> _decodeObjectOrThrow(http.Response res) {
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+    if (res.body.isEmpty) {
+      throw ApiException(res.statusCode, res.body, message: 'Empty body');
+    }
+    final v = jsonDecode(res.body) as dynamic;
+    if (v is Map<String, dynamic>) {
+      return v;
+    }
+    throw ApiException(res.statusCode, res.body);
+  }
+
+  ApiException _exceptionFromResponse(http.Response res) {
+    String? msg;
+    try {
+      final j = jsonDecode(res.body) as dynamic;
+      if (j is Map && j['message'] is String) {
+        msg = j['message'] as String;
+      }
+    } catch (_) {}
+    return ApiException(res.statusCode, res.body, message: msg);
+  }
+
+  void close() => _client.close();
+}

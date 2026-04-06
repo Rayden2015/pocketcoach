@@ -1,0 +1,468 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-pocket-coach-api",
+		"name": "Pocket Coach API",
+		"description": "Laravel Sanctum API for Pocket Coach LMS.\n\n**Setup:** Import this file in Postman. Set collection variables: `base_url` (e.g. `http://127.0.0.1:8000/api`), `tenant_slug` (tenant **slug**, not numeric id).\n\n**Auth:** Run **Register** or **Login**; a test script saves `token` to collection variables. Other requests use `Authorization: Bearer {{token}}`.\n\n**Note:** `{{tenant_slug}}` must match a row in `tenants.slug`. Admin routes require a user with staff role (`owner`, `admin`, or `instructor`) on that tenant.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+		{ "key": "tenant_slug", "value": "adeola" },
+		{ "key": "token", "value": "" },
+		{ "key": "program_id", "value": "1" },
+		{ "key": "course_id", "value": "1" },
+		{ "key": "module_id", "value": "1" },
+		{ "key": "lesson_id", "value": "1" },
+		{ "key": "product_id", "value": "1" }
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+	},
+	"item": [
+		{
+			"name": "Auth (public)",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"try {",
+									"    var j = pm.response.json();",
+									"    if (j.token) { pm.collectionVariables.set('token', j.token); }",
+									"} catch (e) { }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Demo Learner\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}"
+						},
+						"url": "{{base_url}}/v1/register"
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"try {",
+									"    var j = pm.response.json();",
+									"    if (j.token) { pm.collectionVariables.set('token', j.token); }",
+									"} catch (e) { }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"learner@pocketcoach.test\",\n  \"password\": \"password\"\n}"
+						},
+						"url": "{{base_url}}/v1/login"
+					}
+				},
+				{
+					"name": "Google (id_token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"try {",
+									"    var j = pm.response.json();",
+									"    if (j.token) { pm.collectionVariables.set('token', j.token); }",
+									"} catch (e) { }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id_token\": \"<paste JWT from Google Sign-In (mobile) or OAuth Playground>\"\n}"
+						},
+						"url": "{{base_url}}/v1/auth/google",
+						"description": "Backend verifies the token with Google using `GOOGLE_CLIENT_ID` (Web client ID). Same client ID must be used as `serverClientId` in Flutter `google_sign_in`."
+					}
+				}
+			]
+		},
+		{
+			"name": "Auth (Sanctum)",
+			"item": [
+				{
+					"name": "Me",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/me"
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/logout"
+					}
+				}
+			]
+		},
+		{
+			"name": "Learner",
+			"item": [
+				{
+					"name": "Catalog",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/catalog"
+					}
+				},
+				{
+					"name": "Continue learning",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/continue"
+					}
+				},
+				{
+					"name": "Course detail",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/courses/{{course_id}}"
+					}
+				},
+				{
+					"name": "Lesson progress (upsert)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"completed\": true,\n  \"position_seconds\": 0,\n  \"notes\": \"via Postman\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/lessons/{{lesson_id}}/progress"
+					}
+				}
+			]
+		},
+		{
+			"name": "Enrollments & Paystack",
+			"item": [
+				{
+					"name": "Free enroll",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"product_id\": {{product_id}}\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/enrollments/free"
+					}
+				},
+				{
+					"name": "Paystack initialize",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"product_id\": {{product_id}},\n  \"callback_url\": \"https://example.com/paystack/callback\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/payments/paystack/initialize"
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin (staff)",
+			"item": [
+				{
+					"name": "Programs — list",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/programs"
+					}
+				},
+				{
+					"name": "Programs — create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"New program\",\n  \"summary\": \"From Postman\",\n  \"sort_order\": 0,\n  \"is_published\": true\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/programs"
+					}
+				},
+				{
+					"name": "Programs — show",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/programs/{{program_id}}"
+					}
+				},
+				{
+					"name": "Programs — update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated title\",\n  \"is_published\": true\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/programs/{{program_id}}"
+					}
+				},
+				{
+					"name": "Programs — delete",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/programs/{{program_id}}"
+					}
+				},
+				{
+					"name": "Courses — list",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/courses?program_id={{program_id}}"
+					}
+				},
+				{
+					"name": "Courses — create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"program_id\": {{program_id}},\n  \"title\": \"New course\",\n  \"summary\": \"Summary\",\n  \"sort_order\": 0,\n  \"is_published\": true\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/courses"
+					}
+				},
+				{
+					"name": "Courses — show",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/courses/{{course_id}}"
+					}
+				},
+				{
+					"name": "Courses — update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated course\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/courses/{{course_id}}"
+					}
+				},
+				{
+					"name": "Courses — delete",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/courses/{{course_id}}"
+					}
+				},
+				{
+					"name": "Modules — list",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/modules?course_id={{course_id}}"
+					}
+				},
+				{
+					"name": "Modules — create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"course_id\": {{course_id}},\n  \"title\": \"Module 1\",\n  \"sort_order\": 0,\n  \"is_published\": true\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/modules"
+					}
+				},
+				{
+					"name": "Modules — show",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/modules/{{module_id}}"
+					}
+				},
+				{
+					"name": "Modules — update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated module\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/modules/{{module_id}}"
+					}
+				},
+				{
+					"name": "Modules — delete",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/modules/{{module_id}}"
+					}
+				},
+				{
+					"name": "Lessons — list",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/lessons?module_id={{module_id}}"
+					}
+				},
+				{
+					"name": "Lessons — create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"module_id\": {{module_id}},\n  \"title\": \"Lesson 1\",\n  \"lesson_type\": \"text\",\n  \"body\": \"Hello\",\n  \"sort_order\": 0,\n  \"is_published\": true\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/lessons"
+					}
+				},
+				{
+					"name": "Lessons — show",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/lessons/{{lesson_id}}"
+					}
+				},
+				{
+					"name": "Lessons — update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated lesson\",\n  \"body\": \"Updated body\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/lessons/{{lesson_id}}"
+					}
+				},
+				{
+					"name": "Lessons — delete",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/admin/lessons/{{lesson_id}}"
+					}
+				}
+			]
+		},
+		{
+			"name": "Webhooks",
+			"item": [
+				{
+					"name": "Paystack webhook (manual test)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" },
+							{
+								"key": "X-Paystack-Signature",
+								"value": "<compute HMAC SHA512 of raw body with PAYSTACK_SECRET_KEY>",
+								"description": "Must match Paystack verification. For local experiments you can temporarily log the expected signature or use Paystack test webhooks."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event\": \"charge.success\",\n  \"data\": {\n    \"reference\": \"pc_test_reference\",\n    \"amount\": 10000,\n    \"currency\": \"GHS\"\n  }\n}"
+						},
+						"url": "{{base_url}}/webhooks/paystack",
+						"description": "Production Paystack sends this. Signature is required (400 if invalid). Amount/currency must match pending `payments` row for fulfillment."
+					}
+				}
+			]
+		}
+	]
+}

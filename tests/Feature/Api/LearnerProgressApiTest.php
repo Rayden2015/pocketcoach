@@ -1,0 +1,102 @@
+<?php
+
+namespace Tests\Feature\Api;
+
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Lesson;
+use App\Models\Module;
+use App\Models\Program;
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
+class LearnerProgressApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * @return array{tenant: Tenant, course: Course, lesson: Lesson}
+     */
+    private function publishedCourseWithLesson(): array
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        $program = Program::query()->create([
+            'tenant_id' => $tenant->id,
+            'title' => 'P',
+            'slug' => 'p',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $course = Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => $program->id,
+            'title' => 'C',
+            'slug' => 'c',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $module = Module::query()->create([
+            'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
+            'title' => 'M',
+            'slug' => 'm',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $lesson = Lesson::query()->create([
+            'tenant_id' => $tenant->id,
+            'module_id' => $module->id,
+            'title' => 'L',
+            'slug' => 'l',
+            'lesson_type' => 'text',
+            'body' => 'Hi',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+
+        return compact('tenant', 'course', 'lesson');
+    }
+
+    public function test_continue_returns_null_when_not_enrolled(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/continue")
+            ->assertOk()
+            ->assertJsonPath('data', null);
+    }
+
+    public function test_lesson_progress_forbidden_without_enrollment(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'completed' => true,
+        ])->assertForbidden();
+    }
+
+    public function test_lesson_progress_rejects_empty_payload(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Provide notes, position_seconds, and/or completed.');
+    }
+}
