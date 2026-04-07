@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Module;
+use App\Models\Product;
 use App\Models\Program;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
@@ -73,7 +74,9 @@ class LearnerApiTest extends TestCase
 
         $response = $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/catalog");
         $response->assertOk()
-            ->assertJsonPath('data.0.slug', 'p');
+            ->assertJsonPath('data.0.slug', 'p')
+            ->assertJsonPath('data.0.courses.0.is_enrolled', false)
+            ->assertJsonPath('data.0.courses.0.free_product_id', null);
     }
 
     public function test_course_returns_403_without_enrollment(): void
@@ -83,7 +86,28 @@ class LearnerApiTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}")
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('free_product_id', null);
+    }
+
+    public function test_course_403_includes_free_product_id_when_available(): void
+    {
+        $data = $this->seedTenantWithCourse();
+        $product = Product::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'name' => 'Freebie',
+            'slug' => 'freebie',
+            'type' => Product::TYPE_FREE,
+            'currency' => 'NGN',
+            'course_id' => $data['course']->id,
+            'is_active' => true,
+        ]);
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}")
+            ->assertForbidden()
+            ->assertJsonPath('free_product_id', $product->id);
     }
 
     public function test_course_returns_content_when_enrolled(): void
@@ -99,9 +123,83 @@ class LearnerApiTest extends TestCase
         ]);
         Sanctum::actingAs($user);
 
-        $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}")
+        $response = $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}");
+        $response->assertOk()
+            ->assertJsonPath('data.modules.0.lessons.0.body', 'Hello')
+            ->assertJsonPath('data.modules.0.lessons.0.progress', null);
+    }
+
+    public function test_course_includes_lesson_progress_for_learner(): void
+    {
+        $data = $this->seedTenantWithCourse();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        LessonProgress::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'lesson_id' => $data['lesson']->id,
+            'notes' => 'Feedback here',
+            'position_seconds' => 0,
+            'completed_at' => now(),
+        ]);
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}");
+        $response->assertOk()
+            ->assertJsonPath('data.modules.0.lessons.0.progress.notes', 'Feedback here');
+        $this->assertNotNull($response->json('data.modules.0.lessons.0.progress.completed_at'));
+    }
+
+    public function test_learning_summary_counts_completed_lessons(): void
+    {
+        $data = $this->seedTenantWithCourse();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        LessonProgress::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'lesson_id' => $data['lesson']->id,
+            'completed_at' => now(),
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/learning-summary")
             ->assertOk()
-            ->assertJsonPath('data.modules.0.lessons.0.body', 'Hello');
+            ->assertJsonPath('data.0.lessons_total', 1)
+            ->assertJsonPath('data.0.lessons_completed', 1);
+    }
+
+    public function test_join_creates_learner_membership(): void
+    {
+        $data = $this->seedTenantWithCourse();
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->postJson("/api/v1/tenants/{$data['tenant']->slug}/join")
+            ->assertCreated()
+            ->assertJsonPath('role', 'learner');
+
+        $this->assertDatabaseHas('tenant_memberships', [
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'role' => 'learner',
+        ]);
+
+        $this->postJson("/api/v1/tenants/{$data['tenant']->slug}/join")
+            ->assertOk()
+            ->assertJsonPath('message', 'Already a member of this space.');
     }
 
     public function test_continue_returns_first_incomplete_lesson(): void

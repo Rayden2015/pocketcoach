@@ -9,14 +9,19 @@ use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\Learner\CatalogController;
 use App\Http\Controllers\Api\V1\Learner\ContinueLearningController;
 use App\Http\Controllers\Api\V1\Learner\LearnerCourseController;
+use App\Http\Controllers\Api\V1\Learner\LearningSummaryController;
 use App\Http\Controllers\Api\V1\Learner\LessonProgressController;
 use App\Http\Controllers\Api\V1\PaystackPaymentController;
+use App\Http\Controllers\Api\V1\TenantBrandingController;
+use App\Http\Controllers\Api\V1\TenantJoinController;
 use App\Http\Controllers\Api\Webhooks\PaystackWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle']);
 
 Route::prefix('v1')->group(function (): void {
+    Route::get('/tenants/{tenant}/branding', [TenantBrandingController::class, 'show']);
+
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/auth/google', [AuthController::class, 'google']);
@@ -27,6 +32,8 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('/tenants/{tenant}/catalog', [CatalogController::class, 'index']);
         Route::get('/tenants/{tenant}/continue', [ContinueLearningController::class, 'show']);
+        Route::get('/tenants/{tenant}/learning-summary', [LearningSummaryController::class, 'index']);
+        Route::post('/tenants/{tenant}/join', [TenantJoinController::class, 'store']);
         Route::get('/tenants/{tenant}/courses/{course}', [LearnerCourseController::class, 'show']);
         Route::put('/tenants/{tenant}/lessons/{lesson}/progress', [LessonProgressController::class, 'upsert']);
 

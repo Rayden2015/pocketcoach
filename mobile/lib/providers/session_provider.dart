@@ -28,6 +28,30 @@ class SessionNotifier extends AsyncNotifier<String?> {
     });
   }
 
+  Future<void> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final api = ref.read(apiProvider);
+      final j = await api.register(
+        name: name,
+        email: email,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+      final t = j['token'] as String?;
+      if (t == null || t.isEmpty) {
+        throw StateError('No token in response');
+      }
+      await _store.write(t);
+      return t;
+    });
+  }
+
   Future<void> loginWithGoogleIdToken(String idToken) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

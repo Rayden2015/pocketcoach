@@ -5,13 +5,20 @@ import 'package:pocket_coach_mobile/config/api_config.dart';
 import 'package:pocket_coach_mobile/models/catalog_models.dart';
 import 'package:pocket_coach_mobile/models/continue_learning.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
+import 'package:pocket_coach_mobile/models/learning_summary.dart';
 
 class ApiException implements Exception {
-  ApiException(this.statusCode, this.body, {this.message});
+  ApiException(
+    this.statusCode,
+    this.body, {
+    this.message,
+    this.freeProductId,
+  });
 
   final int statusCode;
   final String body;
   final String? message;
+  final int? freeProductId;
 
   @override
   String toString() =>
@@ -67,6 +74,71 @@ class PocketCoachApi {
     return _decodeObject(res);
   }
 
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/register'),
+      headers: _jsonHeaders(null),
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+    return _decodeObject(res);
+  }
+
+  Future<void> joinTenant({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/join'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<void> freeEnroll({
+    required String bearer,
+    required String tenantSlug,
+    required int productId,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/enrollments/free'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode({'product_id': productId}),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<List<LearningCourseSummary>> fetchLearningSummary({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/learning-summary'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => LearningCourseSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<void> logout(String bearer) async {
     final res = await _client.post(
       _u('/v1/logout'),
@@ -104,6 +176,9 @@ class PocketCoachApi {
       _u('/v1/tenants/$tenantSlug/courses/$courseId'),
       headers: _jsonHeaders(bearer),
     );
+    if (res.statusCode == 403) {
+      throw _exceptionFromResponse(res);
+    }
     final map = _decodeObjectOrThrow(res);
     final data = map['data'];
     if (data is! Map<String, dynamic>) {
@@ -191,13 +266,27 @@ class PocketCoachApi {
 
   ApiException _exceptionFromResponse(http.Response res) {
     String? msg;
+    int? freeProductId;
     try {
       final j = jsonDecode(res.body) as dynamic;
-      if (j is Map && j['message'] is String) {
-        msg = j['message'] as String;
+      if (j is Map) {
+        if (j['message'] is String) {
+          msg = j['message'] as String;
+        }
+        final fp = j['free_product_id'];
+        if (fp is int) {
+          freeProductId = fp;
+        } else if (fp is num) {
+          freeProductId = fp.toInt();
+        }
       }
     } catch (_) {}
-    return ApiException(res.statusCode, res.body, message: msg);
+    return ApiException(
+      res.statusCode,
+      res.body,
+      message: msg,
+      freeProductId: freeProductId,
+    );
   }
 
   void close() => _client.close();

@@ -21,13 +21,24 @@
 /storage/pail
 /vendor
 
-# Flutter (mobile/)
+# Flutter / Dart app under mobile/ (see mobile/.gitignore for full set)
 mobile/.dart_tool/
 mobile/build/
 mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
+mobile/.pub/
+mobile/.pub-cache/
+mobile/.fvm/
 mobile/ios/Pods/
 mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/**/local.properties
+mobile/**/*.apk
+mobile/**/*.aab
+mobile/**/*.ipa
+mobile/.env
+mobile/.env.*
+!mobile/.env.example
 _ide_helper.php
 Homestead.json
 Homestead.yaml

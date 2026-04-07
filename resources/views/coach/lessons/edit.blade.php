@@ -11,7 +11,7 @@
 
     <h2 class="text-lg font-semibold">Edit lesson</h2>
 
-    <form method="POST" action="{{ route('coach.lessons.update', [$tenant, $lesson]) }}" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <form method="POST" action="{{ route('coach.lessons.update', [$tenant, $lesson]) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         @csrf
         @method('PUT')
         <div>

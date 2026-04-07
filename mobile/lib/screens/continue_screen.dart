@@ -30,9 +30,9 @@ class ContinueScreen extends ConsumerWidget {
           await ref.read(continueLearningProvider.future);
         },
         child: cont.when(
-          loading: () => const ListView(
-            physics: AlwaysScrollableScrollPhysics(),
-            children: [
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
               SizedBox(height: 120),
               Center(child: CircularProgressIndicator()),
             ],
@@ -113,13 +113,13 @@ class ContinueScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         if (complete)
-                          Chip(
-                            avatar: const Icon(Icons.check, size: 18),
-                            label: const Text('Marked complete'),
+                          const Chip(
+                            avatar: Icon(Icons.check, size: 18),
+                            label: Text('Marked complete'),
                           )
                         else
-                          Chip(
-                            label: const Text('In progress'),
+                          const Chip(
+                            label: Text('In progress'),
                           ),
                         if (progress?.notes != null && progress!.notes!.isNotEmpty) ...[
                           const SizedBox(height: 12),

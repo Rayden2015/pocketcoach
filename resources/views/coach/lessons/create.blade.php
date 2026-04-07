@@ -11,7 +11,7 @@
 
     <h2 class="text-lg font-semibold">New lesson in {{ $module->title }}</h2>
 
-    <form method="POST" action="{{ route('coach.lessons.store', $tenant) }}" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <form method="POST" action="{{ route('coach.lessons.store', $tenant) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         @csrf
         <input type="hidden" name="module_id" value="{{ $module->id }}">
         @include('coach.partials.lesson-fields', ['lesson' => null])

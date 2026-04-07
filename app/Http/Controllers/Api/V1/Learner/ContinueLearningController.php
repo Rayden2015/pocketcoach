@@ -39,7 +39,7 @@ class ContinueLearningController extends Controller
                     'slug' => $lesson->slug,
                     'lesson_type' => $lesson->lesson_type,
                     'body' => $lesson->body,
-                    'media_url' => $lesson->media_url,
+                    'media_url' => $lesson->resolvedMediaUrl(),
                     'meta' => $lesson->meta,
                 ],
                 'progress' => $progress === null ? null : [

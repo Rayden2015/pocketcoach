@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_SUSPENDED = 'suspended';
+
     protected $fillable = [
         'name',
         'slug',
+        'status',
         'branding',
         'settings',
+        'custom_domain',
     ];
 
     protected function casts(): array
@@ -26,6 +32,23 @@ class Tenant extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Absolute URL for this space on the app host (path-based tenancy).
+     * Custom domains can be layered later via custom_domain + DNS.
+     */
+    public function publicUrl(string $path = ''): string
+    {
+        $base = rtrim(config('app.url'), '/');
+        $p = ltrim($path, '/');
+
+        return $p === '' ? "{$base}/{$this->slug}" : "{$base}/{$this->slug}/{$p}";
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
     }
 
     /**

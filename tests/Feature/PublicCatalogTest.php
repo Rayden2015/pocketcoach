@@ -23,14 +23,14 @@ class PublicCatalogTest extends TestCase
             'is_published' => true,
         ]);
 
-        $this->get('/spaces/t/catalog')
+        $this->get('/t/catalog')
             ->assertOk()
             ->assertSee('P', false);
     }
 
     public function test_unknown_tenant_slug_returns_not_found(): void
     {
-        $this->get('/spaces/does-not-exist/catalog')->assertNotFound();
+        $this->get('/does-not-exist/catalog')->assertNotFound();
     }
 
     public function test_unpublished_programs_are_hidden(): void
@@ -51,7 +51,7 @@ class PublicCatalogTest extends TestCase
             'is_published' => false,
         ]);
 
-        $this->get('/spaces/t/catalog')
+        $this->get('/t/catalog')
             ->assertOk()
             ->assertSee('Live', false)
             ->assertDontSee('Draft prog', false);
@@ -84,7 +84,7 @@ class PublicCatalogTest extends TestCase
             'is_published' => false,
         ]);
 
-        $this->get('/spaces/t/catalog')
+        $this->get('/t/catalog')
             ->assertOk()
             ->assertSee('Visible course', false)
             ->assertDontSee('Secret course', false);
@@ -101,7 +101,7 @@ class PublicCatalogTest extends TestCase
             'is_published' => false,
         ]);
 
-        $this->get('/spaces/t/catalog')
+        $this->get('/t/catalog')
             ->assertOk()
             ->assertSee('Nothing published yet.', false)
             ->assertDontSee('Draft only', false);
@@ -126,7 +126,7 @@ class PublicCatalogTest extends TestCase
             'is_published' => false,
         ]);
 
-        $this->get('/spaces/t/catalog')
+        $this->get('/t/catalog')
             ->assertOk()
             ->assertSee('Outer', false)
             ->assertDontSee('Hidden inner', false);

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Services\Auth\GoogleAccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,11 @@ class GoogleAuthController extends Controller
     {
         if ((string) config('services.google.client_id') === '') {
             abort(404);
+        }
+
+        $tenantSlug = request()->query('tenant');
+        if (is_string($tenantSlug) && $tenantSlug !== '') {
+            session(['oauth_intended_tenant_slug' => strtolower($tenantSlug)]);
         }
 
         return Socialite::driver('google')->redirect();
@@ -37,6 +44,24 @@ class GoogleAuthController extends Controller
         $user = $linker->userFromSocialite($googleUser);
         Auth::login($user, true);
         request()->session()->regenerate();
+
+        $slug = session()->pull('oauth_intended_tenant_slug');
+        if (is_string($slug) && $slug !== '') {
+            $tenant = Tenant::query()->where('slug', $slug)->where('status', Tenant::STATUS_ACTIVE)->first();
+            if ($tenant !== null) {
+                TenantMembership::query()->firstOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'role' => 'learner',
+                    ],
+                );
+
+                return redirect()->intended(route('learn.catalog', $tenant));
+            }
+        }
 
         return redirect()->intended(route('dashboard'));
     }

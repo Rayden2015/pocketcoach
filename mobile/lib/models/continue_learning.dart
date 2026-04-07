@@ -9,7 +9,7 @@ class ContinueLearningPayload {
     final course = j['course'];
     final lesson = j['lesson'];
     if (course is! Map<String, dynamic> || lesson is! Map<String, dynamic>) {
-      throw FormatException('continue payload shape');
+      throw const FormatException('continue payload shape');
     }
 
     ContinueProgress? progress;

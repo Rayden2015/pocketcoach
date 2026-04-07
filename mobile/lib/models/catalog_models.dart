@@ -39,14 +39,25 @@ class CatalogCourse {
     required this.title,
     required this.slug,
     this.summary,
+    this.isEnrolled = false,
+    this.freeProductId,
   });
 
   factory CatalogCourse.fromJson(Map<String, dynamic> j) {
+    final fp = j['free_product_id'];
+    int? freeId;
+    if (fp is int) {
+      freeId = fp;
+    } else if (fp is num) {
+      freeId = fp.toInt();
+    }
     return CatalogCourse(
       id: j['id'] as int,
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
+      isEnrolled: j['is_enrolled'] as bool? ?? false,
+      freeProductId: freeId,
     );
   }
 
@@ -54,4 +65,8 @@ class CatalogCourse {
   final String title;
   final String slug;
   final String? summary;
+  final bool isEnrolled;
+  final int? freeProductId;
+
+  bool get canEnrollFree => !isEnrolled && freeProductId != null;
 }

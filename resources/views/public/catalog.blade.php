@@ -8,7 +8,10 @@
         @auth
             <a href="{{ route('learn.catalog', $tenant) }}" class="ml-2 font-medium underline">Open in learner mode</a>
         @else
-            <a href="{{ route('login') }}" class="ml-2 font-medium underline">Log in</a> to track progress and access enrolled courses.
+            <a href="{{ route('space.login', $tenant) }}" class="ml-2 font-medium underline">Log in</a>
+            or
+            <a href="{{ route('space.register', $tenant) }}" class="font-medium underline">register</a>
+            for this space. Then open a course from the learner catalog and use <strong>Enroll free</strong> when the coach has enabled it.
         @endauth
     </div>
 

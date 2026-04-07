@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
-import 'package:pocket_coach_mobile/screens/catalog_screen.dart';
-import 'package:pocket_coach_mobile/screens/continue_screen.dart';
 import 'package:pocket_coach_mobile/screens/course_screen.dart';
 import 'package:pocket_coach_mobile/screens/lesson_screen.dart';
 import 'package:pocket_coach_mobile/screens/login_screen.dart';
 import 'package:pocket_coach_mobile/screens/main_tabs_screen.dart';
+import 'package:pocket_coach_mobile/screens/register_screen.dart';
 import 'package:pocket_coach_mobile/screens/splash_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -45,13 +44,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authed = token != null && token.isNotEmpty;
 
       if (!authed) {
-        if (loc == '/splash' || loc == '/login') {
-          return loc == '/splash' ? '/login' : null;
+        if (loc == '/splash') {
+          return '/login';
+        }
+        if (loc == '/login' || loc == '/register') {
+          return null;
         }
         return '/login';
       }
 
-      if (authed && (loc == '/login' || loc == '/splash')) {
+      if (authed && (loc == '/login' || loc == '/splash' || loc == '/register')) {
         return '/home';
       }
 
@@ -65,6 +67,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (_, __) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/home',

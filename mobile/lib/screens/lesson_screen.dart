@@ -3,7 +3,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/api/pocket_coach_api.dart';
-import 'package:pocket_coach_mobile/models/course_detail.dart';
 import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
@@ -26,6 +25,7 @@ class LessonScreen extends ConsumerStatefulWidget {
 
 class _LessonScreenState extends ConsumerState<LessonScreen> {
   var _saving = false;
+  var _notesHydrated = false;
   final _notes = TextEditingController();
 
   void _switchLesson(int lessonId) {
@@ -57,6 +57,51 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _saveFeedbackOnly() async {
+    final text = _notes.text.trim();
+    if (text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Add feedback before saving')),
+        );
+      }
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final token = ref.read(sessionProvider).valueOrNull;
+      if (token == null) {
+        throw StateError('Not signed in');
+      }
+      final slug = ref.read(tenantSlugProvider);
+      await ref.read(apiProvider).updateLessonProgress(
+            bearer: token,
+            tenantSlug: slug,
+            lessonId: widget.lessonId,
+            notes: text,
+          );
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(courseDetailProvider(widget.courseId));
+      ref.invalidate(continueLearningProvider);
+      ref.invalidate(learningSummaryProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Feedback saved')),
+      );
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Request failed')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
   Future<void> _markComplete({required bool completed}) async {
     setState(() => _saving = true);
     try {
@@ -77,6 +122,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       }
       ref.invalidate(courseDetailProvider(widget.courseId));
       ref.invalidate(continueLearningProvider);
+      ref.invalidate(learningSummaryProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(completed ? 'Marked complete' : 'Marked incomplete')),
       );
@@ -116,11 +162,34 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             return const Center(child: Text('Lesson not found'));
           }
 
+          if (!_notesHydrated) {
+            _notesHydrated = true;
+            final existing = lesson.progress?.notes;
+            if (existing != null && existing.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _notes.text = existing;
+                }
+              });
+            }
+          }
+
           final (prev, next) = course.lessonNeighbors(widget.lessonId);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
+              if (lesson.progress?.isComplete == true)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Chip(
+                      avatar: Icon(Icons.check_circle, size: 18, color: Theme.of(context).colorScheme.primary),
+                      label: const Text('Lesson completed'),
+                    ),
+                  ),
+                ),
               if (lesson.mediaUrl != null && lesson.mediaUrl!.isNotEmpty) ...[
                 FilledButton.tonalIcon(
                   onPressed: () => _openUrl(lesson.mediaUrl!),
@@ -138,17 +207,37 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+              Text(
+                'Feedback & notes',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Share reflections or questions for this lesson. Saved with completion or via Save feedback.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _notes,
-                minLines: 2,
-                maxLines: 4,
+                minLines: 3,
+                maxLines: 6,
                 decoration: const InputDecoration(
-                  labelText: 'Your notes (optional)',
+                  hintText: 'What stood out? What will you try next?',
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonal(
+                  onPressed: _saving ? null : _saveFeedbackOnly,
+                  child: const Text('Save feedback'),
+                ),
+              ),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(

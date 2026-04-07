@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Models\Module;
 use App\Models\Program;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CoachWebTest extends TestCase
@@ -27,7 +30,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post('/coach/cs/programs', [
+        $this->post('/cs/coach/programs', [
             'title' => 'My program',
             'summary' => 'Hello',
             'sort_order' => 0,
@@ -53,7 +56,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post('/coach/t/programs', [
+        $this->post('/t/coach/programs', [
             'title' => 'X',
         ])->assertForbidden();
     }
@@ -71,7 +74,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post("/coach/{$tenant->slug}/courses", [
+        $this->post("/{$tenant->slug}/coach/courses", [
             'program_id' => $program->id,
             'title' => 'Foundations',
             'summary' => 'Intro',
@@ -109,7 +112,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post("/coach/{$tenant->slug}/modules", [
+        $this->post("/{$tenant->slug}/coach/modules", [
             'course_id' => $course->id,
             'title' => 'Week one',
             'sort_order' => 2,
@@ -154,11 +157,12 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post("/coach/{$tenant->slug}/lessons", [
+        $this->post("/{$tenant->slug}/coach/lessons", [
             'module_id' => $module->id,
             'title' => 'Welcome',
             'body' => 'Hello learner.',
             'lesson_type' => 'text',
+            'material_source' => 'none',
             'sort_order' => 0,
             'is_published' => '1',
         ])->assertRedirect(route('coach.lessons.index', ['tenant' => $tenant, 'module_id' => $module->id]));
@@ -171,6 +175,55 @@ class CoachWebTest extends TestCase
             'lesson_type' => 'text',
             'is_published' => true,
         ]);
+    }
+
+    public function test_staff_can_create_pdf_lesson_with_upload(): void
+    {
+        ['tenant' => $tenant, 'user' => $user] = $this->staffWithTenant('cs');
+        $program = Program::query()->create([
+            'tenant_id' => $tenant->id,
+            'title' => 'P',
+            'slug' => 'p',
+            'sort_order' => 0,
+            'is_published' => false,
+        ]);
+        $course = Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => $program->id,
+            'title' => 'C',
+            'slug' => 'c',
+            'sort_order' => 0,
+            'is_published' => false,
+        ]);
+        $module = Module::query()->create([
+            'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
+            'title' => 'M',
+            'slug' => 'm',
+            'sort_order' => 0,
+            'is_published' => false,
+        ]);
+
+        Storage::fake('public');
+        $this->actingAs($user);
+
+        $file = UploadedFile::fake()->create('handout.pdf', 120);
+
+        $this->post("/{$tenant->slug}/coach/lessons", [
+            'module_id' => $module->id,
+            'title' => 'Reading',
+            'lesson_type' => 'pdf',
+            'material_source' => 'upload',
+            'material_file' => $file,
+            'sort_order' => 0,
+            'is_published' => '1',
+        ])->assertRedirect(route('coach.lessons.index', ['tenant' => $tenant, 'module_id' => $module->id]));
+
+        $lesson = Lesson::query()->firstWhere('title', 'Reading');
+        $this->assertNotNull($lesson);
+        $this->assertNotNull($lesson->media_disk_path);
+        $this->assertNull($lesson->media_url);
+        Storage::disk('public')->assertExists($lesson->media_disk_path);
     }
 
     public function test_learner_cannot_post_course(): void
@@ -192,7 +245,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post("/coach/{$tenant->slug}/courses", [
+        $this->post("/{$tenant->slug}/coach/courses", [
             'program_id' => $program->id,
             'title' => 'Nope',
         ])->assertForbidden();
@@ -218,7 +271,7 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post('/coach/a/courses', [
+        $this->post('/a/coach/courses', [
             'program_id' => $programB->id,
             'title' => 'Bad',
         ])->assertSessionHasErrors('program_id');

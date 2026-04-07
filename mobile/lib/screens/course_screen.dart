@@ -3,16 +3,64 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/api/pocket_coach_api.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
+import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
+import 'package:pocket_coach_mobile/providers/session_provider.dart';
+import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
 
-class CourseScreen extends ConsumerWidget {
+class CourseScreen extends ConsumerStatefulWidget {
   const CourseScreen({super.key, required this.courseId});
 
   final int courseId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(courseDetailProvider(courseId));
+  ConsumerState<CourseScreen> createState() => _CourseScreenState();
+}
+
+class _CourseScreenState extends ConsumerState<CourseScreen> {
+  var _enrolling = false;
+
+  Future<void> _enrollFree(int? productId) async {
+    if (productId == null || _enrolling) {
+      return;
+    }
+    final token = ref.read(sessionProvider).valueOrNull;
+    if (token == null) {
+      return;
+    }
+    setState(() => _enrolling = true);
+    try {
+      final slug = ref.read(tenantSlugProvider);
+      await ref.read(apiProvider).freeEnroll(
+            bearer: token,
+            tenantSlug: slug,
+            productId: productId,
+          );
+      ref.invalidate(catalogProvider);
+      ref.invalidate(learningSummaryProvider);
+      ref.invalidate(continueLearningProvider);
+      ref.invalidate(courseDetailProvider(widget.courseId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You are enrolled')),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Enrollment failed')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _enrolling = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(courseDetailProvider(widget.courseId));
 
     return Scaffold(
       appBar: AppBar(
@@ -22,6 +70,7 @@ class CourseScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) {
           if (e is ApiException && e.statusCode == 403) {
+            final freeId = e.freeProductId;
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -43,8 +92,22 @@ class CourseScreen extends ConsumerWidget {
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
-                    const SizedBox(height: 24),
-                    FilledButton(
+                    if (freeId != null) ...[
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: _enrolling ? null : () => _enrollFree(freeId),
+                        icon: _enrolling
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.how_to_reg),
+                        label: Text(_enrolling ? 'Enrolling…' : 'Enroll free'),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    OutlinedButton(
                       onPressed: () => context.pop(),
                       child: const Text('Back to catalog'),
                     ),
@@ -105,6 +168,9 @@ class _ModuleSection extends StatelessWidget {
           for (final lesson in module.lessons)
             ListTile(
               title: Text(lesson.title),
+              leading: lesson.progress?.isComplete == true
+                  ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                  : Icon(Icons.radio_button_unchecked, color: Theme.of(context).colorScheme.outline),
               trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
               onTap: () => context.push('/course/$courseId/lesson/${lesson.id}'),
             ),

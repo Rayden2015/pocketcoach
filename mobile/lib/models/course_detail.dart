@@ -92,6 +92,30 @@ class ModuleOutline {
   final List<LessonOutline> lessons;
 }
 
+class LessonProgressSnapshot {
+  LessonProgressSnapshot({
+    this.completedAt,
+    this.notes,
+    this.positionSeconds,
+  });
+
+  factory LessonProgressSnapshot.fromJson(Map<String, dynamic> j) {
+    final ps = j['position_seconds'];
+    return LessonProgressSnapshot(
+      completedAt: j['completed_at'] as String?,
+      notes: j['notes'] as String?,
+      positionSeconds: ps is int ? ps : (ps is num ? ps.toInt() : null),
+    );
+  }
+
+  final String? completedAt;
+  final String? notes;
+  final int? positionSeconds;
+
+  bool get isComplete =>
+      completedAt != null && completedAt!.isNotEmpty;
+}
+
 class LessonOutline {
   LessonOutline({
     required this.id,
@@ -101,9 +125,15 @@ class LessonOutline {
     required this.body,
     required this.mediaUrl,
     this.meta,
+    this.progress,
   });
 
   factory LessonOutline.fromJson(Map<String, dynamic> j) {
+    LessonProgressSnapshot? pr;
+    final prRaw = j['progress'];
+    if (prRaw is Map<String, dynamic>) {
+      pr = LessonProgressSnapshot.fromJson(prRaw);
+    }
     return LessonOutline(
       id: j['id'] as int,
       title: j['title'] as String,
@@ -112,6 +142,7 @@ class LessonOutline {
       body: j['body'] as String?,
       mediaUrl: j['media_url'] as String?,
       meta: j['meta'],
+      progress: pr,
     );
   }
 
@@ -122,4 +153,5 @@ class LessonOutline {
   final String? body;
   final String? mediaUrl;
   final Object? meta;
+  final LessonProgressSnapshot? progress;
 }

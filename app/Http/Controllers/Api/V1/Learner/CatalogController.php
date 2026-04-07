@@ -5,12 +5,23 @@ namespace App\Http\Controllers\Api\V1\Learner;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
 use App\Models\Tenant;
+use App\Services\CourseAccessService;
+use App\Services\FreeProductLookup;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CatalogController extends Controller
 {
-    public function index(Tenant $tenant): JsonResponse
-    {
+    public function index(
+        Request $request,
+        Tenant $tenant,
+        CourseAccessService $access,
+        FreeProductLookup $freeProducts,
+    ): JsonResponse {
+        $user = $request->user();
+        $accessibleIds = collect($access->accessibleCourseIdsForUserInTenant($user, $tenant->id))
+            ->flip();
+
         $programs = Program::query()
             ->where('tenant_id', $tenant->id)
             ->where('is_published', true)
@@ -26,12 +37,18 @@ class CatalogController extends Controller
                 'title' => $p->title,
                 'slug' => $p->slug,
                 'summary' => $p->summary,
-                'courses' => $p->courses->map(fn ($c) => [
-                    'id' => $c->id,
-                    'title' => $c->title,
-                    'slug' => $c->slug,
-                    'summary' => $c->summary,
-                ]),
+                'courses' => $p->courses->map(function ($c) use ($accessibleIds, $freeProducts, $tenant) {
+                    $freeId = $freeProducts->productIdForCourse($tenant, $c);
+
+                    return [
+                        'id' => $c->id,
+                        'title' => $c->title,
+                        'slug' => $c->slug,
+                        'summary' => $c->summary,
+                        'is_enrolled' => $accessibleIds->has($c->id),
+                        'free_product_id' => $freeId,
+                    ];
+                }),
             ]),
         ]);
     }

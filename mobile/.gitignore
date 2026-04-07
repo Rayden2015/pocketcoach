@@ -1,0 +1,61 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (uncomment to ignore workspace settings)
+# .vscode/
+
+# Flutter / Dart / Pub
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Symbolication & obfuscation
+app.*.symbols
+app.*.map.json
+
+# FVM (https://fvm.app)
+.fvm/
+
+# Melos
+.melos_tool/
+
+# Local env / secrets (never commit API keys)
+.env
+.env.*
+!.env.example
+
+# Android: typical local & build noise (see also android/.gitignore)
+/android/app/debug
+/android/app/profile
+/android/app/release
+*.apk
+*.aab
+*.ap_
+
+# iOS: large / local outputs (see also ios/.gitignore)
+*.ipa
+*.dSYM.zip

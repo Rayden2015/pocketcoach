@@ -1,9 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocket_coach_mobile/api/pocket_coach_api.dart';
+import 'package:pocket_coach_mobile/models/catalog_models.dart';
+import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
+
+Future<void> _joinSpace(BuildContext context, WidgetRef ref) async {
+  final token = ref.read(sessionProvider).valueOrNull;
+  if (token == null) {
+    return;
+  }
+  final slug = ref.read(tenantSlugProvider);
+  try {
+    await ref.read(apiProvider).joinTenant(bearer: token, tenantSlug: slug);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You joined this space')),
+      );
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Could not join space')),
+      );
+    }
+  }
+}
+
+Future<void> _enrollAndOpenCourse(
+  BuildContext context,
+  WidgetRef ref,
+  CatalogCourse course,
+) async {
+  final pid = course.freeProductId;
+  if (pid == null) {
+    return;
+  }
+  final token = ref.read(sessionProvider).valueOrNull;
+  if (token == null) {
+    return;
+  }
+  final slug = ref.read(tenantSlugProvider);
+  try {
+    await ref.read(apiProvider).freeEnroll(
+          bearer: token,
+          tenantSlug: slug,
+          productId: pid,
+        );
+    ref.invalidate(catalogProvider);
+    ref.invalidate(learningSummaryProvider);
+    ref.invalidate(continueLearningProvider);
+    ref.invalidate(courseDetailProvider(course.id));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are enrolled')),
+      );
+      context.push('/course/${course.id}');
+    }
+  } on ApiException catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Enrollment failed')),
+      );
+    }
+  }
+}
 
 class CatalogScreen extends ConsumerWidget {
   const CatalogScreen({super.key});
@@ -54,6 +118,11 @@ class CatalogScreen extends ConsumerWidget {
         title: const Text('Catalog'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.groups_2_outlined),
+            tooltip: 'Join this space',
+            onPressed: () => _joinSpace(context, ref),
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_location_alt_outlined),
             tooltip: 'Change space',
             onPressed: () => _editSlug(context, ref),
@@ -84,9 +153,9 @@ class CatalogScreen extends ConsumerWidget {
                 await ref.read(catalogProvider.future);
               },
               child: catalog.when(
-                loading: () => const ListView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  children: [
+                loading: () => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
                     SizedBox(height: 120),
                     Center(child: CircularProgressIndicator()),
                   ],
@@ -157,14 +226,44 @@ class CatalogScreen extends ConsumerWidget {
                               for (final course in program.courses)
                                 ListTile(
                                   title: Text(course.title),
-                                  subtitle: course.summary != null && course.summary!.isNotEmpty
-                                      ? Text(course.summary!)
-                                      : null,
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (course.summary != null && course.summary!.isNotEmpty)
+                                        Text(course.summary!),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        course.isEnrolled
+                                            ? 'Enrolled — open course'
+                                            : course.canEnrollFree
+                                                ? 'Free — tap to enroll & open'
+                                                : 'Open course (paid / invite may apply)',
+                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                              color: course.isEnrolled
+                                                  ? Theme.of(context).colorScheme.primary
+                                                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                  isThreeLine: true,
                                   trailing: Icon(
                                     Icons.chevron_right,
                                     color: Theme.of(context).colorScheme.primary,
                                   ),
-                                  onTap: () => context.push('/course/${course.id}'),
+                                  onTap: () async {
+                                    if (course.isEnrolled) {
+                                      context.push('/course/${course.id}');
+                                      return;
+                                    }
+                                    if (course.canEnrollFree) {
+                                      await _enrollAndOpenCourse(context, ref, course);
+                                      return;
+                                    }
+                                    if (context.mounted) {
+                                      context.push('/course/${course.id}');
+                                    }
+                                  },
                                 ),
                           ],
                         ),

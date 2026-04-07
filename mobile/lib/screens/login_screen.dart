@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:pocket_coach_mobile/config/api_config.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
@@ -143,6 +144,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text('Sign in'),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: busy ? null : () => context.push('/register'),
+            child: const Text('Create an account'),
           ),
         ],
       ),

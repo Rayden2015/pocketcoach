@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocket_coach_mobile/screens/catalog_screen.dart';
 import 'package:pocket_coach_mobile/screens/continue_screen.dart';
+import 'package:pocket_coach_mobile/screens/progress_screen.dart';
 
 class MainTabsScreen extends StatefulWidget {
   const MainTabsScreen({super.key});
@@ -20,6 +21,7 @@ class _MainTabsScreenState extends State<MainTabsScreen> {
         children: const [
           CatalogScreen(),
           ContinueScreen(),
+          ProgressScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -35,6 +37,11 @@ class _MainTabsScreenState extends State<MainTabsScreen> {
             icon: Icon(Icons.play_circle_outline),
             selectedIcon: Icon(Icons.play_circle),
             label: 'Continue',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights),
+            label: 'Progress',
           ),
         ],
       ),
