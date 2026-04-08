@@ -5,7 +5,54 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* Defaults — overridden by resources/views/partials/design-tokens.blade.php */
+:root {
+    --pc-brand: #1a3a5c;
+    --pc-accent: #0d9488;
+    --pc-bg-0: #dbe4f0;
+    --pc-bg-1: #e8eef6;
+    --pc-bg-2: #f0f4fa;
+}
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Page shell: soft indigo/slate gradient (pre-tenant branding) */
+body.pc-shell {
+    background: linear-gradient(165deg, var(--pc-bg-0) 0%, var(--pc-bg-1) 42%, var(--pc-bg-2) 100%);
+    min-height: 100vh;
+}
+
+.pc-header-glass {
+    background: color-mix(in srgb, var(--pc-surface, #fff) 92%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--pc-brand) 12%, #e2e8f0);
+    box-shadow: 0 4px 24px color-mix(in srgb, var(--pc-brand) 8%, transparent);
+}
+
+.pc-btn-primary {
+    background-color: var(--pc-brand);
+    color: #fff;
+}
+.pc-btn-primary:hover {
+    filter: brightness(1.08);
+}
+.pc-btn-accent {
+    background-color: var(--pc-accent);
+    color: #fff;
+}
+.pc-btn-accent:hover {
+    filter: brightness(1.06);
+}
+.pc-ring-focus:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--pc-accent) 35%, transparent);
+}
+
+.pc-progress-track {
+    background: color-mix(in srgb, var(--pc-brand) 12%, #e2e8f0);
+}
+.pc-progress-fill {
+    background: linear-gradient(90deg, var(--pc-accent), color-mix(in srgb, var(--pc-brand) 55%, var(--pc-accent)));
 }

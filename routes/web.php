@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
 use App\Http\Controllers\Web\Coach\ProgramController as CoachProgramController;
 use App\Http\Controllers\Web\CourseSearchController;
 use App\Http\Controllers\Web\CreateSpaceController;
+use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LearnCatalogController;
 use App\Http\Controllers\Web\LearnContinueController;
 use App\Http\Controllers\Web\LearnCourseController;
@@ -25,7 +26,7 @@ use App\Http\Controllers\Web\SpaceHubController;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'home')->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [SpaceGateController::class, 'show'])->name('login');

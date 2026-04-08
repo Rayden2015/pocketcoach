@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Learner\LearnerCourseController;
 use App\Http\Controllers\Api\V1\Learner\LearningSummaryController;
 use App\Http\Controllers\Api\V1\Learner\LessonProgressController;
 use App\Http\Controllers\Api\V1\PaystackPaymentController;
+use App\Http\Controllers\Api\V1\TaskBoardWebhookController;
 use App\Http\Controllers\Api\V1\TenantBrandingController;
 use App\Http\Controllers\Api\V1\TenantJoinController;
 use App\Http\Controllers\Api\Webhooks\PaystackWebhookController;
@@ -20,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle']);
 
 Route::prefix('v1')->group(function (): void {
+    Route::post('/integrations/qa-tasks', [TaskBoardWebhookController::class, 'store'])
+        ->middleware('task_board.webhook')
+        ->name('api.v1.integrations.qa-tasks');
+
     Route::get('/tenants/{tenant}/branding', [TenantBrandingController::class, 'show']);
 
     Route::post('/register', [AuthController::class, 'register']);

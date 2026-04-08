@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantStaff;
+use App\Http\Middleware\ValidateTaskBoardWebhookSecret;
 use App\Models\Tenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant.staff' => EnsureTenantStaff::class,
             'super_admin' => EnsureSuperAdmin::class,
+            'task_board.webhook' => ValidateTaskBoardWebhookSecret::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
