@@ -44,6 +44,7 @@ class ProgramController extends Controller
             'summary' => ['nullable', 'string', 'max:65535'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $slug = ! empty($validated['slug'] ?? null)
@@ -57,6 +58,7 @@ class ProgramController extends Controller
             'summary' => $validated['summary'] ?? null,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
+            'is_featured' => $request->boolean('is_featured'),
         ]);
 
         return redirect()
@@ -91,6 +93,7 @@ class ProgramController extends Controller
             'summary' => ['nullable', 'string', 'max:65535'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
+            'is_featured' => ['nullable', 'boolean'],
         ]);
 
         $program->fill([
@@ -99,6 +102,7 @@ class ProgramController extends Controller
             'summary' => $validated['summary'] ?? null,
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
+            'is_featured' => $request->boolean('is_featured'),
         ]);
         $program->save();
 

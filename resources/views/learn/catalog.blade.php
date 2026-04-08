@@ -6,11 +6,11 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
             <p class="text-xs font-medium uppercase tracking-wide text-teal-700">{{ $tenant->name }}</p>
-            <h1 class="text-2xl font-semibold tracking-tight">Programs</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">Catalog</h1>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <a href="{{ route('my-learning') }}" class="text-stone-600 hover:text-teal-800">My learning</a>
-            <a href="{{ route('dashboard') }}" class="text-stone-600 hover:text-teal-800">Profile</a>
+            <a href="{{ route('profile') }}" class="text-stone-600 hover:text-teal-800">Profile</a>
             <a href="{{ route('learn.continue', $tenant) }}" class="rounded-full bg-teal-600 px-3 py-1.5 text-white hover:bg-teal-700">Continue</a>
         </div>
     </div>
@@ -30,10 +30,10 @@
 
     <div class="mb-8 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 shadow-sm">
         <p><strong>Enrolling in a course:</strong> open a course below, then use <strong>Enroll free</strong> on the course page when the coach has added a free enrollment offer for that course or program. If you do not see that button, ask your coach to enable free access or to enroll you manually.</p>
-        <p class="mt-2 text-xs text-stone-500">Programs group courses; enrollment is always at the <strong>course</strong> level (or whole-program when a product is scoped to the program).</p>
+        <p class="mt-2 text-xs text-stone-500">Programs group courses. Some courses may sit <strong>outside any program</strong>. Enrollment is at the <strong>course</strong> level (or whole-program when a product is scoped to the program).</p>
     </div>
 
-    @forelse ($programs as $program)
+    @foreach ($programs as $program)
         <section class="mb-10">
             <h2 class="text-lg font-semibold text-stone-900">{{ $program->title }}</h2>
             @if ($program->summary)
@@ -64,7 +64,40 @@
                 @endforeach
             </ul>
         </section>
-    @empty
-        <p class="text-stone-600">No published programs yet.</p>
-    @endforelse
+    @endforeach
+
+    @if ($standaloneCourses->isNotEmpty())
+        <section class="mb-10">
+            <h2 class="text-lg font-semibold text-stone-900">Single courses</h2>
+            <p class="mt-1 text-sm text-stone-600">Not part of a program — open directly below.</p>
+            <ul class="mt-4 space-y-2">
+                @foreach ($standaloneCourses as $course)
+                    @php($meta = $courseMeta[$course->id] ?? ['is_enrolled' => false, 'free_product_id' => null])
+                    <li>
+                        <a href="{{ route('learn.course', [$tenant, $course]) }}"
+                            class="flex flex-col rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-teal-300 hover:shadow">
+                            <span class="flex flex-wrap items-center gap-2">
+                                <span class="font-medium text-stone-900">{{ $course->title }}</span>
+                                @if ($meta['is_enrolled'])
+                                    <span class="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-900">Enrolled</span>
+                                @elseif ($meta['free_product_id'])
+                                    <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700">Free enrollment</span>
+                                @else
+                                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">Access on request</span>
+                                @endif
+                            </span>
+                            @if ($course->summary)
+                                <span class="mt-0.5 text-sm text-stone-600">{{ $course->summary }}</span>
+                            @endif
+                            <span class="mt-1 text-xs text-stone-500">Open the course page to enroll or start lessons.</span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
+    @if ($programs->isEmpty() && $standaloneCourses->isEmpty())
+        <p class="text-stone-600">No published programs or courses yet.</p>
+    @endif
 @endsection

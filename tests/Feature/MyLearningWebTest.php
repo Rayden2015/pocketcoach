@@ -49,6 +49,7 @@ class MyLearningWebTest extends TestCase
         ]);
         Lesson::query()->create([
             'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
             'module_id' => $module->id,
             'title' => 'L1',
             'slug' => 'l1',
@@ -83,5 +84,25 @@ class MyLearningWebTest extends TestCase
         $this->get('/my-learning')
             ->assertOk()
             ->assertSee('do not have any enrollments', false);
+    }
+
+    public function test_my_learning_shows_explore_spaces_for_catalog_tenant_user_not_joined(): void
+    {
+        $other = Tenant::query()->create(['name' => 'Other Studio', 'slug' => 'other-studio']);
+        Program::query()->create([
+            'tenant_id' => $other->id,
+            'title' => 'Live',
+            'slug' => 'live',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        $this->get('/my-learning')
+            ->assertOk()
+            ->assertSee('Explore spaces you can join', false)
+            ->assertSee('Other Studio', false)
+            ->assertSee('Browse catalog', false);
     }
 }

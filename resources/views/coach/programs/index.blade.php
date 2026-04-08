@@ -7,7 +7,11 @@
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-stone-600">Programs structure your offers.</p>
-        <a href="{{ route('coach.programs.create', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New program</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('coach.courses.standalone.index', $tenant) }}" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50">Single courses</a>
+            <a href="{{ route('coach.reflections.index', $tenant) }}" class="rounded-full border border-teal-200 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-50">Daily reflections</a>
+            <a href="{{ route('coach.programs.create', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New program</a>
+        </div>
     </div>
 
     <ul class="mt-2 divide-y divide-stone-200 rounded-2xl border border-stone-200 bg-white shadow-sm">

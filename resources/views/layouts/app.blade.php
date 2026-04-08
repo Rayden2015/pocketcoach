@@ -34,16 +34,17 @@
                     @if(auth()->user()->is_super_admin)
                         <a href="{{ route('platform.tenants.index') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Platform</a>
                     @endif
-                    <a href="{{ route('dashboard') }}" class="max-w-[10rem] truncate rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[12rem]" title="{{ auth()->user()->email }}">
+                    <a href="{{ route('profile') }}" class="max-w-[10rem] truncate rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[12rem]" title="{{ auth()->user()->email }}">
                         {{ auth()->user()->name ?: auth()->user()->email }}
                     </a>
-                    <a href="{{ route('dashboard') }}" class="hidden rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] sm:inline">Profile</a>
+                    <a href="{{ route('profile') }}" class="hidden rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] sm:inline">Profile</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="rounded-full px-3 py-2 text-slate-500 hover:bg-white/80 hover:text-slate-800">Log out</button>
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Log in</a>
+                    <a href="{{ route('register') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Sign up</a>
                     <a href="{{ route('create-space') }}" class="rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 shadow-sm hover:border-[var(--pc-accent)] hover:text-[var(--pc-brand)]">Create a space</a>
                 @endauth
             </nav>
@@ -78,9 +79,14 @@
                                 @endif
                             </div>
                         </div>
-                        <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
-                            Account &amp; spaces →
-                        </a>
+                        <div class="flex shrink-0 flex-wrap gap-2">
+                            <a href="{{ route('profile') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
+                                Profile
+                            </a>
+                            <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
+                                Your spaces
+                            </a>
+                        </div>
                     </div>
                 </div>
             @endisset

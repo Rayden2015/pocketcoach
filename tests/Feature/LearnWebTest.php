@@ -48,6 +48,7 @@ class LearnWebTest extends TestCase
         ]);
         $lesson = Lesson::query()->create([
             'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
             'module_id' => $module->id,
             'title' => 'L1',
             'slug' => 'l1',

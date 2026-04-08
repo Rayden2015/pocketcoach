@@ -42,10 +42,11 @@ class LessonController extends Controller
         $module = Module::query()->where('tenant_id', $tenant->id)->whereKey($validated['module_id'])->firstOrFail();
 
         $baseSlug = Str::slug($validated['title']);
-        $slug = $this->uniqueLessonSlug($module->id, $baseSlug);
+        $slug = $this->uniqueLessonSlug((int) $module->course_id, $baseSlug);
 
         $lesson = Lesson::query()->create([
             'tenant_id' => $tenant->id,
+            'course_id' => $module->course_id,
             'module_id' => $module->id,
             'title' => $validated['title'],
             'slug' => $slug,
@@ -79,7 +80,7 @@ class LessonController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('lessons', 'slug')
-                    ->where(fn ($q) => $q->where('module_id', $lesson->module_id))
+                    ->where(fn ($q) => $q->where('course_id', $lesson->course_id))
                     ->ignore($lesson->id),
             ],
             'lesson_type' => ['sometimes', 'string', 'max:32'],
@@ -91,7 +92,9 @@ class LessonController extends Controller
         ]);
 
         if (isset($validated['module_id'])) {
-            $lesson->module_id = $validated['module_id'];
+            $newModule = Module::query()->where('tenant_id', $tenant->id)->whereKey($validated['module_id'])->firstOrFail();
+            $lesson->module_id = $newModule->id;
+            $lesson->course_id = $newModule->course_id;
         }
 
         $lesson->fill(collect($validated)->except('module_id')->all());
@@ -108,11 +111,11 @@ class LessonController extends Controller
         return response()->json(['message' => 'Deleted.']);
     }
 
-    private function uniqueLessonSlug(int $moduleId, string $base): string
+    private function uniqueLessonSlug(int $courseId, string $base): string
     {
         $slug = $base;
         $i = 1;
-        while (Lesson::query()->where('module_id', $moduleId)->where('slug', $slug)->exists()) {
+        while (Lesson::query()->where('course_id', $courseId)->where('slug', $slug)->exists()) {
             $slug = $base.'-'.$i;
             $i++;
         }

@@ -8,13 +8,14 @@ use App\Models\Lesson;
 use App\Models\Module;
 use App\Models\Product;
 use App\Models\Program;
+use App\Models\ReflectionPrompt;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
 /**
- * Idempotent demo data: two coach spaces, multiple programs, courses, modules, lessons, products, sample enrollments.
+ * Idempotent demo data: two coach spaces, programs, standalone courses, modules, lessons (module + course-level), products, enrollments.
  */
 class PocketCoachDemoSeeder extends Seeder
 {
@@ -160,11 +161,155 @@ MD);
 
         $this->productFree($tenant, 'habits-starters-free', 'Habits Lab — starters (free)', $courseAtomic);
 
+        $courseQuickReset = $this->standaloneCourse($tenant, 'five-minute-reset', 'Five-minute reset', 'Standalone course (no program): only course-level lessons—no modules.', 3);
+        $this->rootLesson($tenant, $courseQuickReset, 'start-here', 'Start here', 1, <<<'MD'
+This course lives **outside any program**—use it for a quick offer or lead magnet.
+
+You can add modules later from the coach workspace; for now these lessons show up first in the outline.
+MD);
+        $this->rootLesson($tenant, $courseQuickReset, 'one-breath', 'One deliberate breath', 2, <<<'MD'
+Set a timer for **one minute**. Breathe in for four, out for six. Nothing to fix—just show up.
+
+When the minute ends, name **one** thing you are willing to do in the next hour.
+MD);
+        $this->productFree($tenant, 'five-min-reset-free', 'Five-minute reset (free)', $courseQuickReset);
+
         $learner = $this->user('learner@pocketcoach.test', 'Learner Sam');
         $this->membership($tenant, $learner, 'learner');
 
         $this->enrollment($tenant, $learner, $programMindset, $courseWeek1);
         $this->enrollment($tenant, $learner, $programHabits, $courseAtomic);
+        $this->enrollment($tenant, $learner, null, $courseQuickReset);
+
+        $this->seedAdeolaCatalogEngagement(
+            $tenant,
+            $coach,
+            $programMindset,
+            $programHabits,
+            $courseWeek1,
+            $courseWeek2,
+            $courseAtomic,
+            $courseReview,
+            $courseQuickReset,
+        );
+    }
+
+    /**
+     * Public catalog copy, featured flags, sample popularity counts, and published reflection prompts (no notify blast on seed).
+     */
+    private function seedAdeolaCatalogEngagement(
+        Tenant $tenant,
+        User $coach,
+        Program $programMindset,
+        Program $programHabits,
+        Course $courseWeek1,
+        Course $courseWeek2,
+        Course $courseAtomic,
+        Course $courseReview,
+        Course $courseStandaloneShowcase,
+    ): void {
+        $tenant->refresh();
+
+        $intro = <<<'MD'
+## Welcome to Adeola Coaching
+
+This space is for **leaders and professionals** who want momentum without burnout. Browse the programs below, open any published course, and use **Enroll free** where the coach has enabled it.
+
+**What you will find**
+
+- **Mindset Sprint** — a two-week reset for clarity, focus, and small daily practices.
+- **Habits Lab** — cues, stacking, and shaping your environment so new routines actually stick.
+- **Single courses** — like *Five-minute reset*: quick paths that are not inside a program.
+
+Coach Adeola posts a **short reflection prompt most days**. Log in to read today’s question and share your take — it helps anchor what you are learning in the lessons.
+
+_Featured_ labels highlight hand-picked paths; course order also reflects how often learners open each course from this catalog.
+MD;
+
+        $tenant->forceFill([
+            'branding' => array_replace_recursive((array) ($tenant->branding ?? []), [
+                'primary' => '#0d9488',
+                'accent' => '#f59e0b',
+                'welcome_headline' => 'Welcome to Adeola Coaching — small steps, steady growth.',
+            ]),
+            'settings' => array_replace_recursive((array) ($tenant->settings ?? []), [
+                'catalog' => [
+                    'intro_markdown' => $intro,
+                    'track_catalog_views' => true,
+                    'show_featured_first' => true,
+                ],
+                'reflections' => [
+                    'enabled' => true,
+                    'notify_email' => true,
+                    'notify_database' => true,
+                ],
+            ]),
+        ])->save();
+
+        $programMindset->forceFill([
+            'is_featured' => true,
+            'catalog_view_count' => 215,
+        ])->save();
+        $programHabits->forceFill([
+            'is_featured' => true,
+            'catalog_view_count' => 142,
+        ])->save();
+
+        $courseWeek1->forceFill([
+            'is_featured' => true,
+            'catalog_view_count' => 428,
+        ])->save();
+        $courseWeek2->forceFill([
+            'is_featured' => false,
+            'catalog_view_count' => 196,
+        ])->save();
+        $courseAtomic->forceFill([
+            'is_featured' => true,
+            'catalog_view_count' => 512,
+        ])->save();
+        $courseReview->forceFill([
+            'is_featured' => false,
+            'catalog_view_count' => 88,
+        ])->save();
+        $courseStandaloneShowcase->forceFill([
+            'is_featured' => true,
+            'catalog_view_count' => 267,
+        ])->save();
+
+        ReflectionPrompt::withoutEvents(function () use ($tenant, $coach): void {
+            $prompts = [
+                [
+                    'title' => 'Reflection — What one thing are you avoiding?',
+                    'body' => 'Name it in one line (no fixing). What would “closing the loop” look like in the next seven days?',
+                    'published_at' => now()->subDays(2),
+                ],
+                [
+                    'title' => 'Reflection — Energy and boundaries',
+                    'body' => 'Where did you feel most energized yesterday — and where did you leak time or attention? One boundary you could tighten this week?',
+                    'published_at' => now()->subDay(),
+                ],
+                [
+                    'title' => 'Reflection — Today’s small practice',
+                    'body' => 'Pick **one** lesson idea from this week and shrink it to a 5-minute version you can do today. What is it?',
+                    'published_at' => now()->subHours(2),
+                ],
+            ];
+
+            foreach ($prompts as $row) {
+                ReflectionPrompt::query()->updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'title' => $row['title'],
+                    ],
+                    [
+                        'author_id' => $coach->id,
+                        'body' => $row['body'],
+                        'is_published' => true,
+                        'published_at' => $row['published_at'],
+                    ],
+                );
+            }
+        });
     }
 
     private function seedNorthstarTenant(): void
@@ -275,11 +420,28 @@ MD);
     {
         return Course::query()->firstOrCreate(
             [
-                'program_id' => $program->id,
+                'tenant_id' => $tenant->id,
                 'slug' => $slug,
             ],
             [
+                'program_id' => $program->id,
+                'title' => $title,
+                'summary' => $summary,
+                'sort_order' => $sort,
+                'is_published' => true,
+            ],
+        );
+    }
+
+    private function standaloneCourse(Tenant $tenant, string $slug, string $title, ?string $summary, int $sort): Course
+    {
+        return Course::query()->firstOrCreate(
+            [
                 'tenant_id' => $tenant->id,
+                'slug' => $slug,
+            ],
+            [
+                'program_id' => null,
                 'title' => $title,
                 'summary' => $summary,
                 'sort_order' => $sort,
@@ -306,13 +468,35 @@ MD);
 
     private function lesson(Tenant $tenant, Module $module, string $slug, string $title, int $sort, string $body): Lesson
     {
+        $courseId = $module->course_id;
+
         return Lesson::query()->firstOrCreate(
             [
-                'module_id' => $module->id,
+                'course_id' => $courseId,
                 'slug' => $slug,
             ],
             [
                 'tenant_id' => $tenant->id,
+                'module_id' => $module->id,
+                'title' => $title,
+                'lesson_type' => 'text',
+                'body' => $body,
+                'sort_order' => $sort,
+                'is_published' => true,
+            ],
+        );
+    }
+
+    private function rootLesson(Tenant $tenant, Course $course, string $slug, string $title, int $sort, string $body): Lesson
+    {
+        return Lesson::query()->firstOrCreate(
+            [
+                'course_id' => $course->id,
+                'slug' => $slug,
+            ],
+            [
+                'tenant_id' => $tenant->id,
+                'module_id' => null,
                 'title' => $title,
                 'lesson_type' => 'text',
                 'body' => $body,
@@ -357,7 +541,7 @@ MD);
         );
     }
 
-    private function enrollment(Tenant $tenant, User $user, Program $program, Course $course): void
+    private function enrollment(Tenant $tenant, User $user, ?Program $program, Course $course): void
     {
         Enrollment::query()->firstOrCreate(
             [
@@ -366,7 +550,7 @@ MD);
                 'course_id' => $course->id,
             ],
             [
-                'program_id' => $program->id,
+                'program_id' => $program?->id,
                 'source' => 'seed',
                 'status' => 'active',
             ],

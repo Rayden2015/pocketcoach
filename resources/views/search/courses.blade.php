@@ -20,7 +20,7 @@
     @if ($tenantCount === 0)
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-8 text-sm text-amber-950">
             <p>Join a space or enroll in a course first — then you can search courses from those spaces.</p>
-            <a href="{{ route('dashboard') }}" class="mt-4 inline-block font-semibold text-teal-800 hover:underline">Go to profile</a>
+            <a href="{{ route('profile') }}" class="mt-4 inline-block font-semibold text-teal-800 hover:underline">Go to profile</a>
         </div>
     @elseif (mb_strlen($query) > 0 && mb_strlen($query) < 2)
         <p class="text-sm text-stone-600">Enter at least 2 characters to search.</p>

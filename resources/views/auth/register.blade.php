@@ -5,6 +5,7 @@
 @section('content')
     <div class="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
         <h1 class="text-xl font-semibold">Create account</h1>
+        <p class="mt-2 text-sm text-stone-600">You’ll join specific spaces from their catalog or register links. This creates your Pocket Coach account you can use everywhere.</p>
         @if ($errors->any())
             <div class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">
                 {{ $errors->first() }}

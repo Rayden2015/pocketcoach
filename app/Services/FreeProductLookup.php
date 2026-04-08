@@ -18,8 +18,10 @@ class FreeProductLookup
             ->where('type', Product::TYPE_FREE)
             ->where('is_active', true)
             ->where(function ($q) use ($course): void {
-                $q->where('course_id', $course->id)
-                    ->orWhere('program_id', $course->program_id);
+                $q->where('course_id', $course->id);
+                if ($course->program_id !== null) {
+                    $q->orWhere('program_id', $course->program_id);
+                }
             })
             ->get(['id', 'course_id', 'program_id']);
 

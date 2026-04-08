@@ -12,6 +12,7 @@
     <div class="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
         <h1 class="text-xl font-semibold text-stone-900">Sign in</h1>
         <p class="mt-1 text-sm text-stone-500">{{ $tenant->name }}</p>
+        <p class="mt-2 text-xs text-stone-500">Use the same email and password as the <a href="{{ route('login') }}" class="font-medium text-teal-700 hover:underline">main log in</a>. Signing in here takes you straight into this space after.</p>
 
         @if (config('services.google.client_id'))
             <a href="{{ route('auth.google.redirect', ['tenant' => $tenant->slug]) }}"

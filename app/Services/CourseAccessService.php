@@ -18,6 +18,10 @@ class CourseAccessService
             return true;
         }
 
+        if ($course->program_id === null) {
+            return false;
+        }
+
         return Enrollment::query()
             ->where('user_id', $user->id)
             ->where('program_id', $course->program_id)

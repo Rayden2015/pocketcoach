@@ -107,6 +107,24 @@ class PublicCatalogTest extends TestCase
             ->assertDontSee('Draft only', false);
     }
 
+    public function test_published_standalone_course_appears_under_single_courses(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => null,
+            'title' => 'Open mic',
+            'slug' => 'open-mic',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+
+        $this->get('/t/catalog')
+            ->assertOk()
+            ->assertSee('Single courses', false)
+            ->assertSee('Open mic', false);
+    }
+
     public function test_published_program_with_only_unpublished_courses_lists_program_without_course_titles(): void
     {
         $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);

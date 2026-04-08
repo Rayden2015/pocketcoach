@@ -16,12 +16,15 @@ class Course extends Model
         'summary',
         'sort_order',
         'is_published',
+        'is_featured',
+        'catalog_view_count',
     ];
 
     protected function casts(): array
     {
         return [
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
         ];
     }
 
@@ -42,10 +45,28 @@ class Course extends Model
     }
 
     /**
+     * Lessons attached directly to the course (no module). Shown before modules in the learner UI.
+     *
+     * @return HasMany<Lesson, $this>
+     */
+    public function rootLessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class)->whereNull('module_id');
+    }
+
+    /**
      * @return HasMany<Module, $this>
      */
     public function modules(): HasMany
     {
         return $this->hasMany(Module::class);
+    }
+
+    /**
+     * @return HasMany<Lesson, $this>
+     */
+    public function lessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class);
     }
 }

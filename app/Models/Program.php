@@ -15,12 +15,15 @@ class Program extends Model
         'summary',
         'sort_order',
         'is_published',
+        'is_featured',
+        'catalog_view_count',
     ];
 
     protected function casts(): array
     {
         return [
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
         ];
     }
 

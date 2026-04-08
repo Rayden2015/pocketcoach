@@ -28,10 +28,7 @@ class ContinueLearningService
             ->where('tenant_id', $tenantId)
             ->whereIn('id', $courseIds)
             ->where('is_published', true)
-            ->with([
-                'modules' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-                'modules.lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-            ])
+            ->with(CourseCurriculumService::eagerLoadPublishedCurriculum())
             ->orderBy('id')
             ->get();
 
@@ -78,8 +75,8 @@ class ContinueLearningService
     /**
      * @return Collection<int, Lesson>
      */
-    private function flattenLessons(Course $course)
+    private function flattenLessons(Course $course): Collection
     {
-        return $course->modules->flatMap(fn ($module) => $module->lessons);
+        return CourseCurriculumService::flattenedPublishedLessons($course);
     }
 }

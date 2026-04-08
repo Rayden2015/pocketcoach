@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Services\Auth\GoogleAccountService;
+use App\Services\Auth\PostAuthRedirect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -63,6 +64,6 @@ class GoogleAuthController extends Controller
             }
         }
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended(PostAuthRedirect::defaultUrl($user));
     }
 }

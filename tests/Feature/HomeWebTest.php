@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Course;
 use App\Models\Program;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,5 +46,22 @@ class HomeWebTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertDontSee('Draft Only', false);
+    }
+
+    public function test_home_lists_space_with_only_published_standalone_course(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Solo Coach', 'slug' => 'solo-coach']);
+        Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => null,
+            'title' => 'Quick course',
+            'slug' => 'quick',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Solo Coach', false);
     }
 }

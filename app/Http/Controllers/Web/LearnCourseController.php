@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
 use App\Services\CourseAccessService;
+use App\Services\CourseCurriculumService;
 use App\Services\FreeProductLookup;
 use Illuminate\View\View;
 
@@ -25,12 +26,9 @@ class LearnCourseController extends Controller
         $canAccess = $this->access->canAccessCourse($user, $course);
         $freeProductId = $canAccess ? null : $this->freeProducts->productIdForCourse($tenant, $course);
 
-        $course->load([
-            'modules' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-            'modules.lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-        ]);
+        $course->load(CourseCurriculumService::eagerLoadPublishedCurriculum());
 
-        $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons)->pluck('id');
+        $lessonIds = CourseCurriculumService::flattenedPublishedLessons($course)->pluck('id');
         $completedLessonIds = collect();
         $lessonsTotal = $lessonIds->count();
         $lessonsCompleted = 0;

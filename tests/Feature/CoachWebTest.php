@@ -157,6 +157,9 @@ class CoachWebTest extends TestCase
 
         $this->actingAs($user);
 
+        $this->get("/{$tenant->slug}/coach/modules")->assertOk()->assertSee('Pick a course', false);
+        $this->get("/{$tenant->slug}/coach/lessons")->assertOk()->assertSee('inside a module', false);
+
         $this->post("/{$tenant->slug}/coach/lessons", [
             'module_id' => $module->id,
             'title' => 'Welcome',
@@ -169,6 +172,7 @@ class CoachWebTest extends TestCase
 
         $this->assertDatabaseHas('lessons', [
             'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
             'module_id' => $module->id,
             'title' => 'Welcome',
             'slug' => 'welcome',

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Contracts\TaskBoard\TaskBoardGateway;
+use App\Models\ReflectionPrompt;
 use App\Models\Tenant;
+use App\Observers\ReflectionPromptObserver;
 use App\Services\Payments\PaystackClient;
 use App\Services\Payments\PaystackGateway;
 use App\Services\TaskBoard\NullTaskBoardGateway;
@@ -57,6 +59,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ReflectionPrompt::observe(ReflectionPromptObserver::class);
+
         Route::bind('tenant', function (string $value): Tenant {
             $slug = strtolower($value);
             if (in_array($slug, config('tenancy.reserved_slugs', []), true)) {
@@ -71,6 +75,18 @@ class AppServiceProvider extends ServiceProvider
 
         Route::bind('adminTenant', function (string $value): Tenant {
             return Tenant::query()->findOrFail((int) $value);
+        });
+
+        Route::bind('reflection_prompt', function (string $value, \Illuminate\Routing\Route $route): ReflectionPrompt {
+            $tenant = $route->parameter('tenant');
+            if (! $tenant instanceof Tenant) {
+                abort(404);
+            }
+
+            return ReflectionPrompt::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($value)
+                ->firstOrFail();
         });
     }
 }

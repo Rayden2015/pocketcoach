@@ -5,6 +5,7 @@
 @section('content')
     <div class="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
         <h1 class="text-xl font-semibold">Log in</h1>
+        <p class="mt-2 text-sm text-stone-600">Use the same email and password for every space. After signing in we’ll take you to your home, or straight into your space if you only belong to one.</p>
         @if ($errors->any())
             <div class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">
                 {{ $errors->first() }}
@@ -37,8 +38,11 @@
             <button type="submit" class="w-full rounded-full bg-teal-600 py-2.5 text-sm font-medium text-white hover:bg-teal-700">Sign in</button>
         </form>
         <p class="mt-6 text-center text-sm text-stone-600">
-            No account?
-            <a href="{{ route('register') }}" class="font-medium text-teal-700 hover:underline">Register</a>
+            New here?
+            <a href="{{ route('register') }}" class="font-medium text-teal-700 hover:underline">Create an account</a>
+            <span class="text-stone-400">·</span>
+            <a href="{{ route('home') }}" class="font-medium text-teal-700 hover:underline">Browse spaces</a>
         </p>
+        <p class="mt-3 text-center text-xs text-stone-500">Invited to a specific space? You can also <a href="{{ route('join-help') }}" class="font-medium text-teal-700 hover:underline">open it from its link</a>.</p>
     </div>
 @endsection

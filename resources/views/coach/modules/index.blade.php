@@ -6,16 +6,26 @@
     @include('coach.partials.header')
 
     <div class="mb-4 text-sm">
-        <a href="{{ route('coach.programs.index', $tenant) }}" class="text-teal-700 hover:underline">Programs</a>
+        <a href="{{ route('coach.modules.index', $tenant) }}" class="text-teal-700 hover:underline">All modules</a>
         <span class="text-stone-400">/</span>
-        <a href="{{ route('coach.courses.index', ['tenant' => $tenant, 'program_id' => $course->program_id]) }}" class="text-teal-700 hover:underline">{{ $course->program->title }}</a>
-        <span class="text-stone-400">/</span>
+        @if ($course->program_id && $course->program)
+            <a href="{{ route('coach.programs.index', $tenant) }}" class="text-teal-700 hover:underline">Programs</a>
+            <span class="text-stone-400">/</span>
+            <a href="{{ route('coach.courses.index', ['tenant' => $tenant, 'program_id' => $course->program_id]) }}" class="text-teal-700 hover:underline">{{ $course->program->title }}</a>
+            <span class="text-stone-400">/</span>
+        @else
+            <a href="{{ route('coach.courses.standalone.index', $tenant) }}" class="text-teal-700 hover:underline">Single courses</a>
+            <span class="text-stone-400">/</span>
+        @endif
         <span class="text-stone-800">{{ $course->title }}</span>
     </div>
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-lg font-semibold">Modules</h2>
-        <a href="{{ route('coach.modules.create', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New module</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('coach.lessons.index', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50">Course-level lessons</a>
+            <a href="{{ route('coach.modules.create', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New module</a>
+        </div>
     </div>
 
     <ul class="divide-y divide-stone-200 rounded-2xl border border-stone-200 bg-white shadow-sm">

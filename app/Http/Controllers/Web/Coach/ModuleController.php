@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Coach;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Module;
+use App\Models\Program;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,9 +17,14 @@ class ModuleController extends Controller
 {
     public function index(Request $request, Tenant $tenant): View
     {
+        $rawCourseId = $request->query('course_id');
+        if ($rawCourseId === null || $rawCourseId === '' || (int) $rawCourseId < 1) {
+            return $this->modulesHub($tenant);
+        }
+
         $course = Course::query()
             ->where('tenant_id', $tenant->id)
-            ->whereKey($request->integer('course_id'))
+            ->whereKey((int) $rawCourseId)
             ->with('program')
             ->firstOrFail();
 
@@ -35,17 +41,45 @@ class ModuleController extends Controller
         ]);
     }
 
-    public function create(Request $request, Tenant $tenant): View
+    public function create(Request $request, Tenant $tenant): View|RedirectResponse
     {
+        $rawCourseId = $request->query('course_id');
+        if ($rawCourseId === null || $rawCourseId === '' || (int) $rawCourseId < 1) {
+            return redirect()
+                ->route('coach.modules.index', $tenant)
+                ->with('status', 'Choose a course to add a module.');
+        }
+
         $course = Course::query()
             ->where('tenant_id', $tenant->id)
-            ->whereKey($request->integer('course_id'))
+            ->whereKey((int) $rawCourseId)
             ->with('program')
             ->firstOrFail();
 
         return view('coach.modules.create', [
             'tenant' => $tenant,
             'course' => $course,
+        ]);
+    }
+
+    private function modulesHub(Tenant $tenant): View
+    {
+        $programs = Program::query()
+            ->where('tenant_id', $tenant->id)
+            ->with(['courses' => fn ($q) => $q->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get();
+
+        $standaloneCourses = Course::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereNull('program_id')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('coach.modules.hub', [
+            'tenant' => $tenant,
+            'programs' => $programs,
+            'standaloneCourses' => $standaloneCourses,
         ]);
     }
 

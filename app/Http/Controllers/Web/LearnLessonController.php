@@ -7,6 +7,7 @@ use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
 use App\Services\CourseAccessService;
+use App\Services\CourseCurriculumService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -20,9 +21,9 @@ class LearnLessonController extends Controller
     {
         abort_unless($lesson->tenant_id === $tenant->id, 404);
 
-        $lesson->load('module.course');
-        $course = $lesson->module->course ?? abort(404);
-        abort_unless($course->tenant_id === $tenant->id, 404);
+        $lesson->load(['module.course', 'course']);
+        $course = $lesson->module?->course ?? $lesson->course;
+        abort_unless($course !== null && $course->tenant_id === $tenant->id, 404);
 
         if (! $this->access->canAccessCourse(auth()->user(), $course)) {
             return redirect()
@@ -30,12 +31,9 @@ class LearnLessonController extends Controller
                 ->with('warning', 'Enroll in this course on the page below to open lessons.');
         }
 
-        $course->load([
-            'modules' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-            'modules.lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-        ]);
+        $course->load(CourseCurriculumService::eagerLoadPublishedCurriculum());
 
-        $flat = $course->modules->flatMap(fn ($m) => $m->lessons);
+        $flat = CourseCurriculumService::flattenedPublishedLessons($course);
         $flatIds = $flat->pluck('id');
         $index = $flat->search(fn ($l) => $l->is($lesson));
         $prevLesson = is_int($index) && $index > 0 ? $flat[$index - 1] : null;

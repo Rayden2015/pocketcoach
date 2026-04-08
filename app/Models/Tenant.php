@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -79,10 +80,39 @@ class Tenant extends Model
     }
 
     /**
+     * @return HasMany<Course, $this>
+     */
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Course::class);
+    }
+
+    /**
+     * Tenants that have something to show on the public / learner catalog (published program and/or published course).
+     *
+     * @param  Builder<Tenant>  $query
+     */
+    public function scopeCatalogDiscoverable(Builder $query): void
+    {
+        $query->where(function (Builder $q): void {
+            $q->whereHas('programs', fn (Builder $p) => $p->where('is_published', true))
+                ->orWhereHas('courses', fn (Builder $c) => $c->where('is_published', true));
+        });
+    }
+
+    /**
      * @return HasMany<Product, $this>
      */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    /**
+     * @return HasMany<ReflectionPrompt, $this>
+     */
+    public function reflectionPrompts(): HasMany
+    {
+        return $this->hasMany(ReflectionPrompt::class);
     }
 }

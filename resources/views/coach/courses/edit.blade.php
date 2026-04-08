@@ -6,7 +6,11 @@
     @include('coach.partials.header')
 
     <div class="mb-4 text-sm">
-        <a href="{{ route('coach.courses.index', ['tenant' => $tenant, 'program_id' => $course->program_id]) }}" class="text-teal-700 hover:underline">← Courses</a>
+        @if ($course->program_id)
+            <a href="{{ route('coach.courses.index', ['tenant' => $tenant, 'program_id' => $course->program_id]) }}" class="text-teal-700 hover:underline">← Program courses</a>
+        @else
+            <a href="{{ route('coach.courses.standalone.index', $tenant) }}" class="text-teal-700 hover:underline">← Single courses</a>
+        @endif
     </div>
 
     <h2 class="text-lg font-semibold">Edit course</h2>
@@ -16,11 +20,13 @@
         @method('PUT')
         <div>
             <label for="program_id" class="block text-sm font-medium text-stone-700">Program</label>
-            <select id="program_id" name="program_id" required class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm">
-                @foreach (\App\Models\Program::query()->where('tenant_id', $tenant->id)->orderBy('title')->get() as $prog)
-                    <option value="{{ $prog->id }}" @selected(old('program_id', $course->program_id) == $prog->id)>{{ $prog->title }}</option>
+            <select id="program_id" name="program_id" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm">
+                <option value="" @selected(old('program_id', $course->program_id) === null)>None — single course</option>
+                @foreach ($programs as $prog)
+                    <option value="{{ $prog->id }}" @selected((int) old('program_id', $course->program_id) === $prog->id)>{{ $prog->title }}</option>
                 @endforeach
             </select>
+            <p class="mt-1 text-xs text-stone-500">Leave as single course, or move into a program anytime.</p>
         </div>
         @include('coach.partials.course-fields', ['course' => $course])
         <button type="submit" class="rounded-full bg-teal-600 px-5 py-2 text-sm font-medium text-white hover:bg-teal-700">Save</button>

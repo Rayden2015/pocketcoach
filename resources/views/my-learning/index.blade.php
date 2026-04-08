@@ -10,13 +10,17 @@
             Every course you’re enrolled in across your spaces, with clear progress. Pick up where you left off—similar to major learning platforms, with your own brand colors when a space customizes them.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-            <a href="{{ route('dashboard') }}"
+            <a href="#explore-spaces"
                 class="inline-flex items-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[var(--pc-brand)] shadow-md transition hover:bg-slate-50">
-                Browse more spaces
+                Explore spaces to join
+            </a>
+            <a href="{{ route('profile') }}"
+                class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
+                Profile
             </a>
             <a href="{{ route('dashboard') }}"
                 class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
-                Account &amp; profile
+                Your spaces
             </a>
         </div>
     </div>
@@ -30,10 +34,15 @@
             <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">
                 When a coach enables <strong class="text-[var(--pc-brand)]">free enrollment</strong> on a course, open that course and use <strong>Enroll free</strong>. Your courses will appear here with progress bars automatically.
             </p>
-            <a href="{{ route('dashboard') }}"
+            <a href="#explore-spaces"
                 class="pc-btn-primary mt-8 inline-flex rounded-full px-6 py-3 text-sm font-semibold shadow-md">
-                Go to profile &amp; pick a space
+                Explore spaces below
             </a>
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold text-[var(--pc-accent)]">
+                <a href="{{ route('profile') }}" class="hover:underline">Profile</a>
+                <span class="text-white/30">·</span>
+                <a href="{{ route('dashboard') }}" class="hover:underline">Your spaces</a>
+            </div>
         </div>
     @else
         <div class="grid gap-7 sm:grid-cols-2 xl:grid-cols-3">
@@ -99,4 +108,52 @@
             @endforeach
         </div>
     @endif
+
+    <section class="mt-16 scroll-mt-8" id="explore-spaces">
+        <h2 class="text-lg font-bold text-[var(--pc-brand)]">Explore spaces you can join</h2>
+        <p class="mt-2 max-w-2xl text-sm text-slate-600">
+            Browse a <strong>public catalog</strong>, then sign in on that space or use <strong>Join this space</strong> on the learner catalog when you are ready to learn there.
+        </p>
+
+        @if ($discoverSpaces->isNotEmpty())
+            <ul class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ($discoverSpaces as $space)
+                    <li class="flex flex-col rounded-3xl border border-white/70 bg-white/95 p-5 shadow-[var(--pc-shadow)] backdrop-blur-sm">
+                        <h3 class="text-base font-bold text-slate-900">{{ $space->name }}</h3>
+                        <p class="mt-1 font-mono text-xs text-slate-500">/{{ $space->slug }}</p>
+                        <p class="mt-2 text-xs text-slate-600">
+                            @if ($space->published_programs_count > 0)
+                                {{ $space->published_programs_count }} {{ \Illuminate\Support\Str::plural('program', $space->published_programs_count) }}
+                            @endif
+                            @if ($space->published_programs_count > 0 && $space->published_standalone_courses_count > 0)
+                                ·
+                            @endif
+                            @if ($space->published_standalone_courses_count > 0)
+                                {{ $space->published_standalone_courses_count }} single {{ \Illuminate\Support\Str::plural('course', $space->published_standalone_courses_count) }}
+                            @endif
+                        </p>
+                        <div class="mt-4 flex flex-1 flex-wrap gap-2 border-t border-slate-100 pt-4">
+                            <a href="{{ route('public.catalog', $space) }}" class="pc-btn-primary inline-flex rounded-full px-4 py-2 text-sm font-semibold shadow-sm">
+                                Browse catalog
+                            </a>
+                            <a href="{{ route('space.register', $space) }}" class="inline-flex items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] hover:border-[var(--pc-accent)]">
+                                Register here
+                            </a>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @elseif ($demoTenant)
+            <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-sm text-slate-600 shadow-sm">
+                <p>No other discoverable spaces yet (you may already belong to every space here).</p>
+                <a href="{{ route('public.catalog', $demoTenant) }}" class="mt-4 inline-flex rounded-full bg-[var(--pc-brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:opacity-95">
+                    Open demo catalog ({{ $demoTenant->name }})
+                </a>
+            </div>
+        @else
+            <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-sm text-slate-600 shadow-sm">
+                <p>No spaces to discover right now. Ask your coach for an invite link or check back later.</p>
+            </div>
+        @endif
+    </section>
 @endsection

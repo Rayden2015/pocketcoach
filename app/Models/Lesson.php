@@ -30,6 +30,7 @@ class Lesson extends Model
 
     protected $fillable = [
         'tenant_id',
+        'course_id',
         'module_id',
         'title',
         'slug',
@@ -98,6 +99,14 @@ class Lesson extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 
     /**

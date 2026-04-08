@@ -48,6 +48,7 @@ class LearnerApiTest extends TestCase
         ]);
         $lesson = Lesson::query()->create([
             'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
             'module_id' => $module->id,
             'title' => 'L1',
             'slug' => 'l1',
@@ -77,6 +78,68 @@ class LearnerApiTest extends TestCase
             ->assertJsonPath('data.0.slug', 'p')
             ->assertJsonPath('data.0.courses.0.is_enrolled', false)
             ->assertJsonPath('data.0.courses.0.free_product_id', null);
+    }
+
+    public function test_catalog_appends_standalone_courses_bucket(): void
+    {
+        $data = $this->seedTenantWithCourse();
+        $standalone = Course::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'program_id' => null,
+            'title' => 'Solo',
+            'slug' => 'solo',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/catalog");
+        $response->assertOk()
+            ->assertJsonPath('data.0.slug', 'p')
+            ->assertJsonPath('data.1.slug', '_standalone')
+            ->assertJsonPath('data.1.courses.0.slug', 'solo')
+            ->assertJsonPath('data.1.courses.0.id', $standalone->id);
+    }
+
+    public function test_course_api_includes_root_lessons_in_first_module_bucket(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        $course = Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => null,
+            'title' => 'Solo C',
+            'slug' => 'solo-c',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+        Lesson::query()->create([
+            'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
+            'module_id' => null,
+            'title' => 'Root L',
+            'slug' => 'root-l',
+            'lesson_type' => 'text',
+            'body' => 'Root body',
+            'sort_order' => 0,
+            'is_published' => true,
+        ]);
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->getJson("/api/v1/tenants/{$tenant->slug}/courses/{$course->id}")
+            ->assertOk()
+            ->assertJsonPath('data.modules.0.id', 0)
+            ->assertJsonPath('data.modules.0.slug', '_root')
+            ->assertJsonPath('data.modules.0.lessons.0.slug', 'root-l')
+            ->assertJsonPath('data.modules.0.lessons.0.body', 'Root body');
     }
 
     public function test_course_returns_403_without_enrollment(): void

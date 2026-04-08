@@ -20,11 +20,13 @@
         @forelse ($courses as $course)
             <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <div>
-                    <a href="{{ route('coach.modules.index', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="font-medium text-stone-900 hover:text-teal-800">{{ $course->title }}</a>
+                    <span class="font-medium text-stone-900">{{ $course->title }}</span>
                     <span class="ml-2 text-xs text-stone-500">{{ $course->slug }}</span>
                     <span class="ml-2 text-xs {{ $course->is_published ? 'text-teal-700' : 'text-stone-400' }}">{{ $course->is_published ? 'Published' : 'Draft' }}</span>
                 </div>
                 <div class="flex flex-wrap gap-2 text-sm">
+                    <a href="{{ route('coach.modules.index', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="text-teal-700 hover:underline">Modules</a>
+                    <a href="{{ route('coach.lessons.index', ['tenant' => $tenant, 'course_id' => $course->id]) }}" class="text-teal-700 hover:underline">Course lessons</a>
                     <a href="{{ route('coach.courses.edit', [$tenant, $course]) }}" class="text-teal-700 hover:underline">Edit</a>
                     <form method="POST" action="{{ route('coach.courses.destroy', [$tenant, $course]) }}" class="inline" onsubmit="return confirm('Delete this course and nested modules?');">
                         @csrf

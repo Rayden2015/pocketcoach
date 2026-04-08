@@ -1,0 +1,29 @@
+# Laravel — root .htaccess for cPanel / shared hosting
+#
+# Preferred: in cPanel, set the domain’s document root to the `public` folder only.
+# Then you do not rely on this file; only `public/.htaccess` is used.
+#
+# If you must point the document root at the project root (folder that contains
+# `app`, `public`, `vendor`, etc.), this file forwards all traffic into `public/`.
+
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks -Indexes
+    RewriteEngine On
+
+    # If the site runs in a subdirectory (e.g. https://example.com/lms/), uncomment
+    # the next line and set the path (leading slash, trailing slash):
+    # RewriteBase /lms/
+
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+# Do not serve environment files from the web root
+<Files ".env">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\TenantRole;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Services\Coach\CoachSpaceSnapshotBuilder;
 use Illuminate\View\View;
 
 class SpaceHubController extends Controller
@@ -22,12 +24,23 @@ class SpaceHubController extends Controller
             ->get();
 
         $memberships = $user->memberships()->get()->keyBy('tenant_id');
-        $demo = Tenant::query()->where('slug', 'adeola')->first();
+
+        $staffTenantIds = $user->memberships()
+            ->whereIn('role', TenantRole::staffValues())
+            ->pluck('tenant_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $coachSnapshots = $staffTenantIds !== []
+            ? app(CoachSpaceSnapshotBuilder::class)->buildMany($staffTenantIds)
+            : [];
 
         return view('dashboard', [
             'tenants' => $tenants,
             'memberships' => $memberships,
-            'demoTenant' => $demo,
+            'coachSnapshots' => $coachSnapshots,
         ]);
     }
 }

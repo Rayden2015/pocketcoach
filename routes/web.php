@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\SpaceGateController;
 use App\Http\Controllers\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Auth\TenantSessionController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Web\Coach\CourseController as CoachCourseController;
 use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
 use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
 use App\Http\Controllers\Web\Coach\ProgramController as CoachProgramController;
+use App\Http\Controllers\Web\Coach\ReflectionPromptController as CoachReflectionPromptController;
 use App\Http\Controllers\Web\CourseSearchController;
 use App\Http\Controllers\Web\CreateSpaceController;
 use App\Http\Controllers\Web\HomeController;
@@ -19,9 +21,12 @@ use App\Http\Controllers\Web\LearnCourseController;
 use App\Http\Controllers\Web\LearnEnrollmentController;
 use App\Http\Controllers\Web\LearnLessonController;
 use App\Http\Controllers\Web\LearnLessonProgressController;
+use App\Http\Controllers\Web\LearnReflectionController;
 use App\Http\Controllers\Web\LearnSpaceJoinController;
 use App\Http\Controllers\Web\MyLearningController;
+use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\PublicCatalogController;
+use App\Http\Controllers\Web\PublicCatalogTrackController;
 use App\Http\Controllers\Web\SpaceHubController;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Route;
@@ -29,7 +34,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function (): void {
-    Route::get('/login', [SpaceGateController::class, 'show'])->name('login');
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store']);
+    Route::get('/join-help', [SpaceGateController::class, 'show'])->name('join-help');
     Route::get('/create-space', [CreateSpaceController::class, 'create'])->name('create-space');
     Route::post('/create-space', [CreateSpaceController::class, 'store']);
 
@@ -45,6 +54,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/search', [CourseSearchController::class, 'index'])->name('search.courses');
 
     Route::get('/dashboard', [SpaceHubController::class, 'index'])->name('dashboard');
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::middleware('super_admin')->prefix('platform')->name('platform.')->group(function (): void {
         Route::resource('tenants', TenantAdminController::class)->only(['index', 'create', 'store', 'edit', 'update'])
@@ -70,6 +82,7 @@ Route::prefix('{tenant:slug}')->group(function (): void {
 
     Route::middleware('auth')->group(function (): void {
         Route::post('/join', [LearnSpaceJoinController::class, 'store'])->name('space.join');
+        Route::post('/catalog/track', [PublicCatalogTrackController::class, 'store'])->name('public.catalog.track');
 
         Route::prefix('learn')->name('learn.')->group(function (): void {
             Route::get('/', fn (Tenant $tenant) => redirect()->route('learn.catalog', $tenant))->name('home');
@@ -79,12 +92,17 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::get('/courses/{course}', [LearnCourseController::class, 'show'])->name('course');
             Route::get('/lessons/{lesson}', [LearnLessonController::class, 'show'])->name('lesson');
             Route::post('/lessons/{lesson}/progress', [LearnLessonProgressController::class, 'update'])->name('lesson.progress');
+            Route::get('/reflections/{reflection_prompt}', [LearnReflectionController::class, 'show'])->name('reflections.show');
+            Route::post('/reflections/{reflection_prompt}/response', [LearnReflectionController::class, 'updateResponse'])->name('reflections.response');
         });
 
         Route::middleware('tenant.staff')->prefix('coach')->name('coach.')->group(function (): void {
             Route::get('/', fn (Tenant $tenant) => redirect()->route('coach.programs.index', $tenant))->name('home');
 
             Route::resource('programs', CoachProgramController::class)->except(['show']);
+
+            Route::get('standalone-courses', [CoachCourseController::class, 'standaloneIndex'])->name('courses.standalone.index');
+            Route::get('standalone-courses/create', [CoachCourseController::class, 'standaloneCreate'])->name('courses.standalone.create');
 
             Route::get('courses', [CoachCourseController::class, 'index'])->name('courses.index');
             Route::get('courses/create', [CoachCourseController::class, 'create'])->name('courses.create');
@@ -106,6 +124,9 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::get('lessons/{lesson}/edit', [CoachLessonController::class, 'edit'])->name('lessons.edit');
             Route::put('lessons/{lesson}', [CoachLessonController::class, 'update'])->name('lessons.update');
             Route::delete('lessons/{lesson}', [CoachLessonController::class, 'destroy'])->name('lessons.destroy');
+
+            Route::resource('reflections', CoachReflectionPromptController::class)
+                ->parameters(['reflection' => 'reflection_prompt']);
         });
     });
 });

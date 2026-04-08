@@ -15,14 +15,15 @@ class HomeController extends Controller
                 $q->where('status', Tenant::STATUS_ACTIVE)
                     ->orWhereNull('status');
             })
+            ->catalogDiscoverable()
             ->withCount([
                 'programs as published_programs_count' => function ($q): void {
                     $q->where('is_published', true);
                 },
+                'courses as published_standalone_courses_count' => function ($q): void {
+                    $q->where('is_published', true)->whereNull('program_id');
+                },
             ])
-            ->whereHas('programs', function ($q): void {
-                $q->where('is_published', true);
-            })
             ->orderBy('name')
             ->get();
 

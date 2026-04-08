@@ -29,6 +29,6 @@ class TenantSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('my-learning'));
+        return redirect()->intended(route('learn.continue', $tenant));
     }
 }
