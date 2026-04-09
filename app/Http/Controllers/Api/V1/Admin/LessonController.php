@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LessonController extends Controller
 {
@@ -93,8 +94,12 @@ class LessonController extends Controller
 
         if (isset($validated['module_id'])) {
             $newModule = Module::query()->where('tenant_id', $tenant->id)->whereKey($validated['module_id'])->firstOrFail();
+            if ($newModule->course_id !== $lesson->course_id) {
+                throw ValidationException::withMessages([
+                    'module_id' => 'Module must belong to the same course as the lesson.',
+                ]);
+            }
             $lesson->module_id = $newModule->id;
-            $lesson->course_id = $newModule->course_id;
         }
 
         $lesson->fill(collect($validated)->except('module_id')->all());

@@ -7,8 +7,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "google/apiclient": "^2.19",
-        "laravel/framework": "^13.0",
+        "firebase/php-jwt": "^7.0",
+        "laravel/framework": "~13.3.0",
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.26",
         "laravel/tinker": "^3.0"

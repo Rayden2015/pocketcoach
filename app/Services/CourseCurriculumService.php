@@ -30,9 +30,24 @@ final class CourseCurriculumService
             ? $course->rootLessons
             : $course->rootLessons()->where('is_published', true)->orderBy('sort_order')->get();
 
-        $fromModules = $course->relationLoaded('modules')
-            ? $course->modules->flatMap(fn ($m) => $m->relationLoaded('lessons') ? $m->lessons : collect())
-            : collect();
+        if ($course->relationLoaded('modules')) {
+            $fromModules = $course->modules->flatMap(function ($m) {
+                if ($m->relationLoaded('lessons')) {
+                    return $m->lessons;
+                }
+
+                return $m->lessons()->where('is_published', true)->orderBy('sort_order')->get();
+            });
+        } else {
+            $fromModules = $course->modules()
+                ->where('is_published', true)
+                ->orderBy('sort_order')
+                ->with([
+                    'lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
+                ])
+                ->get()
+                ->flatMap(fn ($m) => $m->lessons);
+        }
 
         return $root->concat($fromModules)->values();
     }
