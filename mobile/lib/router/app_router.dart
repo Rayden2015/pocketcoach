@@ -6,6 +6,8 @@ import 'package:pocket_coach_mobile/screens/course_screen.dart';
 import 'package:pocket_coach_mobile/screens/lesson_screen.dart';
 import 'package:pocket_coach_mobile/screens/login_screen.dart';
 import 'package:pocket_coach_mobile/screens/main_tabs_screen.dart';
+import 'package:pocket_coach_mobile/screens/notifications_screen.dart';
+import 'package:pocket_coach_mobile/screens/reflection_screen.dart';
 import 'package:pocket_coach_mobile/screens/register_screen.dart';
 import 'package:pocket_coach_mobile/screens/splash_screen.dart';
 
@@ -75,6 +77,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (_, __) => const MainTabsScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, __) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/reflection/:promptId',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['promptId']!);
+          return ReflectionScreen(promptId: id);
+        },
       ),
       GoRoute(
         path: '/course/:courseId',

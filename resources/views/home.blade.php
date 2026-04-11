@@ -6,16 +6,18 @@
     <div class="overflow-hidden rounded-3xl border border-white/60 bg-white/90 px-6 py-10 shadow-[var(--pc-shadow-lg)] backdrop-blur-sm sm:px-10">
         <h1 class="text-3xl font-bold tracking-tight text-[var(--pc-brand)] sm:text-4xl">Coaching, structured.</h1>
         <p class="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
-            Browse spaces below. You can register on a space’s page or <a href="{{ route('login') }}" class="font-semibold text-[var(--pc-accent)] hover:underline">log in here</a> first — same account everywhere.
+            Browse spaces below. <a href="{{ route('login') }}" class="font-semibold text-[var(--pc-accent)] hover:underline">Log in</a> or register from any space when you’re ready.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
             @auth
                 <a href="{{ route('my-learning') }}" class="pc-btn-primary inline-flex rounded-full px-5 py-2.5 text-sm font-semibold shadow-md">
                     My learning
                 </a>
-                <a href="{{ route('dashboard') }}" class="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[var(--pc-brand)] shadow-sm hover:border-[var(--pc-accent)]">
-                    Your spaces
-                </a>
+                @if(auth()->user()->coachesAnySpace())
+                    <a href="{{ route('my-coaching') }}" class="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[var(--pc-brand)] shadow-sm hover:border-[var(--pc-accent)]">
+                        My coaching
+                    </a>
+                @endif
             @else
                 <a href="{{ route('login') }}" class="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[var(--pc-brand)] shadow-sm hover:border-[var(--pc-accent)]">
                     Log in
@@ -32,7 +34,7 @@
 
     <section class="mt-12" id="spaces">
         <h2 class="text-lg font-bold text-[var(--pc-brand)]">Learning spaces</h2>
-        <p class="mt-1 text-sm text-slate-600">Spaces with published programs and/or published courses (including single courses). Open a catalog to explore; register or log in on that space when you’re ready to join.</p>
+        <p class="mt-1 text-sm text-slate-600">Spaces with published programs or courses.</p>
 
         @if ($spaces->isEmpty())
             <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-12 text-center text-sm text-slate-600 shadow-sm">
@@ -68,8 +70,8 @@
                                     Log in to this space
                                 </a>
                             @else
-                                <a href="{{ route('learn.catalog', $space) }}" class="text-center text-sm font-semibold text-[var(--pc-accent)] hover:text-[var(--pc-brand)] hover:underline">
-                                    Learner catalog (logged in)
+                                <a href="{{ route('learn.catalog', $space) }}" class="text-center text-sm font-semibold text-[var(--pc-accent)] hover:text-[var(--pc-brand)] hover:underline" title="Your member view: enrollments and lessons for this space.">
+                                    Member catalog
                                 </a>
                             @endguest
                         </div>
@@ -79,7 +81,4 @@
         @endif
     </section>
 
-    <p class="mt-10 text-sm text-slate-500">
-        <strong class="text-slate-700">Same login everywhere.</strong> Signing in at the top works for every space; opening <strong class="text-slate-700">Log in to this space</strong> only skips a step so you land in the right catalog after signing in.
-    </p>
 @endsection

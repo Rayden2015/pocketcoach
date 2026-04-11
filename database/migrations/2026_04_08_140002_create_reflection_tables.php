@@ -16,6 +16,7 @@ return new class extends Migration
             $table->text('body');
             $table->boolean('is_published')->default(false);
             $table->timestamp('published_at')->nullable();
+            $table->timestamp('scheduled_publish_at')->nullable();
             $table->timestamps();
 
             $table->index(['tenant_id', 'is_published', 'published_at']);

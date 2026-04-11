@@ -48,13 +48,27 @@ class LearnLessonController extends Controller
         $progress = LessonProgress::query()
             ->where('user_id', auth()->id())
             ->where('lesson_id', $lesson->id)
+            ->withCount('conversationMessages')
             ->first();
+
+        $publicPeerNotes = LessonProgress::query()
+            ->where('lesson_id', $lesson->id)
+            ->where('tenant_id', $tenant->id)
+            ->where('notes_is_public', true)
+            ->whereNotNull('notes')
+            ->where('notes', '!=', '')
+            ->where('user_id', '!=', auth()->id())
+            ->with('user:id,name')
+            ->orderByDesc('updated_at')
+            ->limit(50)
+            ->get();
 
         return view('learn.lesson', [
             'tenant' => $tenant,
             'course' => $course,
             'lesson' => $lesson,
             'progress' => $progress,
+            'publicPeerNotes' => $publicPeerNotes,
             'prevLesson' => $prevLesson,
             'nextLesson' => $nextLesson,
             'completedLessonIds' => $completedLessonIds,

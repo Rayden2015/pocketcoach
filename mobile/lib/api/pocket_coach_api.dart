@@ -5,6 +5,7 @@ import 'package:pocket_coach_mobile/config/api_config.dart';
 import 'package:pocket_coach_mobile/models/catalog_models.dart';
 import 'package:pocket_coach_mobile/models/continue_learning.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
+import 'package:pocket_coach_mobile/models/engagement_models.dart';
 import 'package:pocket_coach_mobile/models/learning_summary.dart';
 
 class ApiException implements Exception {
@@ -206,6 +207,152 @@ class PocketCoachApi {
     return ContinueLearningPayload.fromJson(data);
   }
 
+  Future<List<UserNotificationItem>> fetchNotifications({
+    required String bearer,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/notifications'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => UserNotificationItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<int> fetchUnreadNotificationCount({
+    required String bearer,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/notifications/unread-count'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final c = map['count'];
+    if (c is int) {
+      return c;
+    }
+    if (c is num) {
+      return c.toInt();
+    }
+    return 0;
+  }
+
+  /// Marks a single database notification as read (`id` is the UUID from the list endpoint).
+  Future<Map<String, dynamic>> markNotificationRead({
+    required String bearer,
+    required String notificationId,
+  }) async {
+    final res = await _client.patch(
+      _u('/v1/notifications/$notificationId'),
+      headers: _jsonHeaders(bearer),
+    );
+    return _decodeObject(res);
+  }
+
+  /// Marks every unread notification as read; response includes `marked` (count updated).
+  Future<int> markAllNotificationsRead({
+    required String bearer,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/notifications/read-all'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final m = map['marked'];
+    if (m is int) {
+      return m;
+    }
+    if (m is num) {
+      return m.toInt();
+    }
+    return 0;
+  }
+
+  /// When reflections are disabled for the tenant, the API returns 404 — treated as null.
+  /// When enabled but there is no prompt, returns null (`data` null).
+  Future<ReflectionPrompt?> fetchReflectionLatest({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/reflection-prompts/latest'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode == 404) {
+      return null;
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+    if (res.body.isEmpty) {
+      return null;
+    }
+    final decoded = jsonDecode(res.body) as dynamic;
+    if (decoded is! Map<String, dynamic>) {
+      return null;
+    }
+    final data = decoded['data'];
+    if (data is! Map<String, dynamic>) {
+      return null;
+    }
+    return ReflectionPrompt.fromJson(data);
+  }
+
+  Future<ReflectionPrompt> fetchReflectionPrompt({
+    required String bearer,
+    required String tenantSlug,
+    required int promptId,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/reflection-prompts/$promptId'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObjectOrThrow(res);
+    final data = map['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(res.statusCode, res.body, message: 'Invalid reflection payload');
+    }
+    return ReflectionPrompt.fromJson(data);
+  }
+
+  Future<void> recordReflectionView({
+    required String bearer,
+    required String tenantSlug,
+    required int promptId,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/reflection-prompts/$promptId/view'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<Map<String, dynamic>> upsertReflectionResponse({
+    required String bearer,
+    required String tenantSlug,
+    required int promptId,
+    required String body,
+    bool? isPublic,
+  }) async {
+    final payload = <String, dynamic>{'body': body};
+    if (isPublic != null) {
+      payload['is_public'] = isPublic;
+    }
+    final res = await _client.put(
+      _u('/v1/tenants/$tenantSlug/reflection-prompts/$promptId/response'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(payload),
+    );
+    return _decodeObject(res);
+  }
+
   Future<Map<String, dynamic>> updateLessonProgress({
     required String bearer,
     required String tenantSlug,
@@ -213,6 +360,7 @@ class PocketCoachApi {
     bool? completed,
     int? positionSeconds,
     String? notes,
+    bool? notesIsPublic,
   }) async {
     final payload = <String, dynamic>{};
     if (completed != null) {
@@ -223,6 +371,9 @@ class PocketCoachApi {
     }
     if (notes != null) {
       payload['notes'] = notes;
+    }
+    if (notesIsPublic != null) {
+      payload['notes_is_public'] = notesIsPublic;
     }
     final res = await _client.put(
       _u('/v1/tenants/$tenantSlug/lessons/$lessonId/progress'),

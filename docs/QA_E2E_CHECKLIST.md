@@ -135,7 +135,6 @@ Use **Sanctum**: `POST /api/v1/register` or `login` → `Authorization: Bearer {
 | PA1 | Access | Non–super-admin opens `/platform/tenants` | Denied per middleware. |
 | PA2 | CRUD | Super admin lists/creates/edits tenants | Only where implemented in `TenantAdminController` routes. |
 
----
 
 ## 11. Regression / edge cases
 

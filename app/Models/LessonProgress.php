@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class LessonProgress extends Model
 {
@@ -15,6 +16,7 @@ class LessonProgress extends Model
         'lesson_id',
         'completed_at',
         'notes',
+        'notes_is_public',
         'position_seconds',
     ];
 
@@ -22,6 +24,7 @@ class LessonProgress extends Model
     {
         return [
             'completed_at' => 'datetime',
+            'notes_is_public' => 'boolean',
         ];
     }
 
@@ -47,5 +50,13 @@ class LessonProgress extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    /**
+     * @return MorphMany<SubmissionConversationMessage, $this>
+     */
+    public function conversationMessages(): MorphMany
+    {
+        return $this->morphMany(SubmissionConversationMessage::class, 'subject')->orderBy('created_at');
     }
 }

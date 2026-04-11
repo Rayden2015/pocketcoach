@@ -34,13 +34,26 @@ class LearnReflectionController extends Controller
         $responseRow = ReflectionResponse::query()
             ->where('reflection_prompt_id', $reflection_prompt->id)
             ->where('user_id', $user->id)
+            ->withCount('conversationMessages')
             ->first();
+
+        $publicPeerResponses = ReflectionResponse::query()
+            ->where('reflection_prompt_id', $reflection_prompt->id)
+            ->where('is_public', true)
+            ->whereNotNull('body')
+            ->where('body', '!=', '')
+            ->where('user_id', '!=', $user->id)
+            ->with('user:id,name')
+            ->orderByDesc('updated_at')
+            ->limit(50)
+            ->get();
 
         return view('learn.reflection', [
             'tenant' => $tenant,
             'prompt' => $reflection_prompt,
             'viewRow' => $viewRow,
             'responseRow' => $responseRow,
+            'publicPeerResponses' => $publicPeerResponses,
         ]);
     }
 
@@ -54,6 +67,7 @@ class LearnReflectionController extends Controller
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:65535'],
+            'is_public' => ['nullable', 'boolean'],
         ]);
 
         $now = now();
@@ -62,6 +76,7 @@ class LearnReflectionController extends Controller
             'user_id' => $user->id,
         ]);
         $response->body = $validated['body'];
+        $response->is_public = $request->boolean('is_public');
         if ($response->first_submitted_at === null) {
             $response->first_submitted_at = $now;
         }

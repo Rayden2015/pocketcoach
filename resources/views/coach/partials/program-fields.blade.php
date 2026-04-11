@@ -26,7 +26,7 @@
 <label class="flex items-center gap-2 text-sm text-stone-700">
     <input type="hidden" name="is_featured" value="0">
     <input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $p?->is_featured ?? false))>
-    Featured (shown first on public catalog when enabled for the space)
+    <span title="When on, this program is highlighted first on the space catalog.">Featured in catalog</span>
 </label>
 <label class="flex items-center gap-2 text-sm text-stone-700">
     <input type="hidden" name="is_published" value="0">

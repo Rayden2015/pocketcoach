@@ -14,7 +14,12 @@ final class PostAuthRedirect
     public static function defaultUrl(User $user): string
     {
         if ($user->is_super_admin) {
-            return route('dashboard');
+            return route('my-coaching');
+        }
+
+        // Coaches land on the hub first; learner shortcuts apply only when they are not on staff anywhere.
+        if ($user->coachesAnySpace()) {
+            return route('my-coaching');
         }
 
         $tenantIds = $user->enrollments()->pluck('tenant_id')
@@ -23,17 +28,17 @@ final class PostAuthRedirect
             ->values();
 
         if ($tenantIds->count() !== 1) {
-            return route('dashboard');
+            return route('my-learning');
         }
 
         $tenant = Tenant::query()->whereKey($tenantIds->first())->first();
         if ($tenant === null) {
-            return route('dashboard');
+            return route('my-learning');
         }
 
         $usable = $tenant->status === Tenant::STATUS_ACTIVE || $tenant->status === null;
         if (! $usable) {
-            return route('dashboard');
+            return route('my-learning');
         }
 
         return route('learn.continue', $tenant);

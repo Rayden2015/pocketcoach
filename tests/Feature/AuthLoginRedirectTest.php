@@ -35,17 +35,17 @@ class AuthLoginRedirectTest extends TestCase
         ])->assertRedirect(route('learn.continue', $tenant));
     }
 
-    public function test_global_login_redirects_to_dashboard_when_user_has_no_spaces(): void
+    public function test_global_login_redirects_to_my_learning_when_user_has_no_spaces(): void
     {
         $user = User::factory()->create();
 
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-        ])->assertRedirect(route('dashboard'));
+        ])->assertRedirect(route('my-learning'));
     }
 
-    public function test_global_login_redirects_to_dashboard_when_user_has_multiple_spaces(): void
+    public function test_global_login_redirects_to_my_learning_when_user_has_multiple_spaces_as_learner_only(): void
     {
         $t1 = Tenant::query()->create(['name' => 'A', 'slug' => 'a', 'status' => Tenant::STATUS_ACTIVE]);
         $t2 = Tenant::query()->create(['name' => 'B', 'slug' => 'b', 'status' => Tenant::STATUS_ACTIVE]);
@@ -56,7 +56,23 @@ class AuthLoginRedirectTest extends TestCase
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-        ])->assertRedirect(route('dashboard'));
+        ])->assertRedirect(route('my-learning'));
+    }
+
+    public function test_global_login_redirects_to_my_coaching_when_user_is_staff(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Led', 'slug' => 'led', 'status' => Tenant::STATUS_ACTIVE]);
+        $user = User::factory()->create();
+        TenantMembership::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'role' => 'owner',
+        ]);
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect(route('my-coaching'));
     }
 
     public function test_space_login_redirects_to_continue_for_that_tenant(): void

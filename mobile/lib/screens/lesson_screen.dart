@@ -26,6 +26,7 @@ class LessonScreen extends ConsumerStatefulWidget {
 class _LessonScreenState extends ConsumerState<LessonScreen> {
   var _saving = false;
   var _notesHydrated = false;
+  var _notesPublic = false;
   final _notes = TextEditingController();
 
   void _switchLesson(int lessonId) {
@@ -79,6 +80,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             tenantSlug: slug,
             lessonId: widget.lessonId,
             notes: text,
+            notesIsPublic: _notesPublic,
           );
       if (!mounted) {
         return;
@@ -116,6 +118,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             lessonId: widget.lessonId,
             completed: completed,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+            notesIsPublic: _notesPublic,
           );
       if (!mounted) {
         return;
@@ -162,7 +165,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             return const Center(child: Text('Lesson not found'));
           }
 
-          if (!_notesHydrated) {
+            if (!_notesHydrated) {
             _notesHydrated = true;
             final existing = lesson.progress?.notes;
             if (existing != null && existing.isNotEmpty) {
@@ -172,6 +175,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 }
               });
             }
+            _notesPublic = lesson.progress?.notesIsPublic ?? false;
           }
 
           final (prev, next) = course.lessonNeighbors(widget.lessonId);
@@ -228,6 +232,18 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Share with other learners'),
+                subtitle: const Text('Show this note to enrolled learners on this lesson.'),
+                value: _notesPublic,
+                onChanged: _saving
+                    ? null
+                    : (v) {
+                        setState(() => _notesPublic = v ?? false);
+                      },
               ),
               const SizedBox(height: 12),
               Align(

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Contracts\TaskBoard\TaskBoardGateway;
+use App\Models\LessonProgress;
 use App\Models\ReflectionPrompt;
+use App\Models\ReflectionResponse;
 use App\Models\Tenant;
 use App\Observers\ReflectionPromptObserver;
 use App\Services\Payments\PaystackClient;
@@ -86,6 +88,30 @@ class AppServiceProvider extends ServiceProvider
             return ReflectionPrompt::query()
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($value)
+                ->firstOrFail();
+        });
+
+        Route::bind('reflectionResponse', function (string $value, \Illuminate\Routing\Route $route): ReflectionResponse {
+            $tenant = $route->parameter('tenant');
+            if (! $tenant instanceof Tenant) {
+                abort(404);
+            }
+
+            return ReflectionResponse::query()
+                ->whereKey($value)
+                ->whereHas('reflectionPrompt', fn ($q) => $q->where('tenant_id', $tenant->id))
+                ->firstOrFail();
+        });
+
+        Route::bind('lessonProgress', function (string $value, \Illuminate\Routing\Route $route): LessonProgress {
+            $tenant = $route->parameter('tenant');
+            if (! $tenant instanceof Tenant) {
+                abort(404);
+            }
+
+            return LessonProgress::query()
+                ->whereKey($value)
+                ->where('tenant_id', $tenant->id)
                 ->firstOrFail();
         });
     }

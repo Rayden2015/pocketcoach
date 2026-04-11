@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
 use App\Models\User;
@@ -99,29 +98,21 @@ class MyLearningOverviewService
 
     private function publishedLessonIdsForCourse(int $courseId): Collection
     {
-        return Lesson::query()
-            ->whereHas('module', fn ($q) => $q->where('course_id', $courseId)->where('is_published', true))
-            ->where('is_published', true)
-            ->pluck('id');
+        return CourseCurriculumService::publishedLessonIdsForCourse($courseId);
     }
 
     private function continueUrl(User $user, Tenant $tenant, Course $course): string
     {
-        $course->loadMissing([
-            'modules' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-            'modules.lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
-        ]);
+        $course->loadMissing(CourseCurriculumService::eagerLoadPublishedCurriculum());
 
-        foreach ($course->modules as $module) {
-            foreach ($module->lessons as $lesson) {
-                $p = LessonProgress::query()
-                    ->where('user_id', $user->id)
-                    ->where('lesson_id', $lesson->id)
-                    ->first();
+        foreach (CourseCurriculumService::flattenedPublishedLessons($course) as $lesson) {
+            $p = LessonProgress::query()
+                ->where('user_id', $user->id)
+                ->where('lesson_id', $lesson->id)
+                ->first();
 
-                if ($p === null || $p->completed_at === null) {
-                    return route('learn.lesson', [$tenant, $lesson]);
-                }
+            if ($p === null || $p->completed_at === null) {
+                return route('learn.lesson', [$tenant, $lesson]);
             }
         }
 

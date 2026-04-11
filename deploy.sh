@@ -12,6 +12,7 @@
 #   SKIP_COMPOSER=1   Do not run composer (you always upload vendor/)
 #   SKIP_NPM=1        Do not auto-run npm build (build locally & upload public/build/)
 #   SKIP_OPTIMIZE=1   Clear caches only; skip "php artisan optimize"
+#   SKIP_SENTRY_RELEASE=1  Do not write SENTRY_RELEASE to .env (deploy.sh sets git short SHA + UTC time)
 #
 # -----------------------------------------------------------------------------
 # cPanel cron — Laravel scheduler (reflections:publish-due, etc.)
@@ -97,6 +98,21 @@ if grep -q '^DB_CONNECTION=sqlite' .env 2>/dev/null; then
   touch database/database.sqlite 2>/dev/null || true
 fi
 
+# --- Sentry release (git short SHA + UTC deploy timestamp for Sentry Releases) ---
+if [[ "${SKIP_SENTRY_RELEASE:-0}" != "1" ]]; then
+  GIT_SHORT="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  DEPLOY_TS="$(date -u +%Y-%m-%dT%H%M%SZ)"
+  SENTRY_RELEASE_VAL="${GIT_SHORT}-${DEPLOY_TS}"
+  if grep -q '^SENTRY_RELEASE=' .env 2>/dev/null; then
+    grep -v '^SENTRY_RELEASE=' .env > .env.tmp
+    mv .env.tmp .env
+  fi
+  printf '%s\n' "SENTRY_RELEASE=${SENTRY_RELEASE_VAL}" >> .env
+  echo "==> Sentry SENTRY_RELEASE=${SENTRY_RELEASE_VAL}"
+else
+  echo "==> SKIP_SENTRY_RELEASE=1 — leaving .env SENTRY_RELEASE unchanged"
+fi
+
 echo "==> Ensure storage & bootstrap/cache dirs"
 mkdir -p \
   storage/framework/sessions \
@@ -130,4 +146,5 @@ echo " Done. Next:"
 echo " • .env: APP_URL=https://your-domain, APP_DEBUG=false for real hosting tests"
 echo " • cPanel: cron every minute → php artisan schedule:run (see comments at top of deploy.sh)"
 echo " • Docroot should be the public/ folder, or use root .htaccess → public/"
+echo " • Sentry: SENTRY_RELEASE in .env is refreshed each deploy (git short SHA + UTC time); set SKIP_SENTRY_RELEASE=1 to skip"
 echo "=========================================="

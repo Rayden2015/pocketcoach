@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\UserNotificationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -8,12 +9,14 @@ use App\Http\Controllers\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Auth\TenantSessionController;
 use App\Http\Controllers\Platform\TenantAdminController;
 use App\Http\Controllers\Web\Coach\CourseController as CoachCourseController;
+use App\Http\Controllers\Web\Coach\LearnerSubmissionController as CoachLearnerSubmissionController;
 use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
 use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
 use App\Http\Controllers\Web\Coach\ProgramController as CoachProgramController;
 use App\Http\Controllers\Web\Coach\ReflectionPromptController as CoachReflectionPromptController;
 use App\Http\Controllers\Web\CourseSearchController;
 use App\Http\Controllers\Web\CreateSpaceController;
+use App\Http\Controllers\Web\ExtraSpaceController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LearnCatalogController;
 use App\Http\Controllers\Web\LearnContinueController;
@@ -28,6 +31,7 @@ use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\PublicCatalogController;
 use App\Http\Controllers\Web\PublicCatalogTrackController;
 use App\Http\Controllers\Web\SpaceHubController;
+use App\Http\Controllers\Web\SubmissionConversationController;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Route;
 
@@ -53,10 +57,19 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/search', [CourseSearchController::class, 'index'])->name('search.courses');
 
-    Route::get('/dashboard', [SpaceHubController::class, 'index'])->name('dashboard');
+    Route::get('/my-coaching', [SpaceHubController::class, 'index'])->name('my-coaching');
+    Route::permanentRedirect('/dashboard', '/my-coaching');
+
+    Route::get('/spaces/new', [ExtraSpaceController::class, 'create'])->name('spaces.create');
+    Route::post('/spaces', [ExtraSpaceController::class, 'store'])->name('spaces.store');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/notifications', [UserNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::patch('/notifications/{id}', [UserNotificationController::class, 'markAsRead'])->name('notifications.read');
 
     Route::middleware('super_admin')->prefix('platform')->name('platform.')->group(function (): void {
         Route::resource('tenants', TenantAdminController::class)->only(['index', 'create', 'store', 'edit', 'update'])
@@ -96,6 +109,15 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::post('/reflections/{reflection_prompt}/response', [LearnReflectionController::class, 'updateResponse'])->name('reflections.response');
         });
 
+        Route::get('/submission-conversations/reflection/{reflectionResponse}', [SubmissionConversationController::class, 'showReflection'])
+            ->name('submission-conversations.reflection.show');
+        Route::post('/submission-conversations/reflection/{reflectionResponse}', [SubmissionConversationController::class, 'storeReflection'])
+            ->name('submission-conversations.reflection.message');
+        Route::get('/submission-conversations/lesson/{lessonProgress}', [SubmissionConversationController::class, 'showLesson'])
+            ->name('submission-conversations.lesson.show');
+        Route::post('/submission-conversations/lesson/{lessonProgress}', [SubmissionConversationController::class, 'storeLesson'])
+            ->name('submission-conversations.lesson.message');
+
         Route::middleware('tenant.staff')->prefix('coach')->name('coach.')->group(function (): void {
             Route::get('/', fn (Tenant $tenant) => redirect()->route('coach.programs.index', $tenant))->name('home');
 
@@ -125,6 +147,11 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::put('lessons/{lesson}', [CoachLessonController::class, 'update'])->name('lessons.update');
             Route::delete('lessons/{lesson}', [CoachLessonController::class, 'destroy'])->name('lessons.destroy');
 
+            Route::get('learner-submissions', [CoachLearnerSubmissionController::class, 'index'])
+                ->name('learner-submissions.index');
+            Route::get('reflections/submissions', function (Tenant $tenant) {
+                return redirect()->route('coach.learner-submissions.index', ['tenant' => $tenant, 'tab' => 'reflections']);
+            })->name('reflections.submissions.index');
             Route::resource('reflections', CoachReflectionPromptController::class)
                 ->parameters(['reflection' => 'reflection_prompt']);
         });

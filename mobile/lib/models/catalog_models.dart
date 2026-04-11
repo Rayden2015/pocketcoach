@@ -8,6 +8,8 @@ class CatalogProgram {
   });
 
   factory CatalogProgram.fromJson(Map<String, dynamic> j) {
+    final idRaw = j['id'];
+    final id = idRaw is int ? idRaw : (idRaw is num ? idRaw.toInt() : int.parse(idRaw.toString()));
     final coursesRaw = j['courses'];
     final courses = <CatalogCourse>[];
     if (coursesRaw is List) {
@@ -18,7 +20,7 @@ class CatalogProgram {
       }
     }
     return CatalogProgram(
-      id: j['id'] as int,
+      id: id,
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
@@ -51,8 +53,10 @@ class CatalogCourse {
     } else if (fp is num) {
       freeId = fp.toInt();
     }
+    final idRaw = j['id'];
+    final cid = idRaw is int ? idRaw : (idRaw is num ? idRaw.toInt() : int.parse(idRaw.toString()));
     return CatalogCourse(
-      id: j['id'] as int,
+      id: cid,
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,

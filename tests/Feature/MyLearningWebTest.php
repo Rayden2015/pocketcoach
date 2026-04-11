@@ -101,7 +101,7 @@ class MyLearningWebTest extends TestCase
 
         $this->get('/my-learning')
             ->assertOk()
-            ->assertSee('Explore spaces you can join', false)
+            ->assertSee('Explore spaces', false)
             ->assertSee('Other Studio', false)
             ->assertSee('Browse catalog', false);
     }

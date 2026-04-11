@@ -1,7 +1,10 @@
 *.log
+/archive.zip
 .DS_Store
 .env
 .env.backup
+.env.dusk.local
+database/dusk.sqlite
 .env.production
 .phpactor.json
 .phpunit.result.cache

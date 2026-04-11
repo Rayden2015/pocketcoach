@@ -27,11 +27,22 @@ return new class extends Migration
             $table->foreignId('course_id')->nullable()->after('tenant_id')->constrained()->cascadeOnDelete();
         });
 
-        foreach (DB::table('lessons')->select('id', 'module_id')->get() as $row) {
-            $courseId = DB::table('modules')->where('id', $row->module_id)->value('course_id');
-            if ($courseId !== null) {
-                DB::table('lessons')->where('id', $row->id)->update(['course_id' => $courseId]);
-            }
+        // Backfill course_id from the lesson’s module (all lessons still have module_id here).
+        $links = DB::table('lessons')
+            ->join('modules', 'modules.id', '=', 'lessons.module_id')
+            ->whereNotNull('modules.course_id')
+            ->select('lessons.id as lesson_id', 'modules.course_id')
+            ->get();
+
+        foreach ($links as $link) {
+            DB::table('lessons')->where('id', $link->lesson_id)->update(['course_id' => $link->course_id]);
+        }
+
+        $stillNull = (int) DB::table('lessons')->whereNull('course_id')->count();
+        if ($stillNull > 0) {
+            throw new RuntimeException(
+                "Cannot require lessons.course_id: {$stillNull} lesson row(s) have no course_id (missing module, or module.course_id is null). Fix data before re-running this migration."
+            );
         }
 
         Schema::table('lessons', function (Blueprint $table): void {
@@ -56,7 +67,5 @@ return new class extends Migration
         });
     }
 
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

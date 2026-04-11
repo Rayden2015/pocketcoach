@@ -7,23 +7,28 @@
         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">Your learning hub</p>
         <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">My learning</h1>
         <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">
-            Every course you’re enrolled in across your spaces, with clear progress. Pick up where you left off—similar to major learning platforms, with your own brand colors when a space customizes them.
+            Courses you’re enrolled in and your progress in one place.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
             <a href="#explore-spaces"
                 class="inline-flex items-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[var(--pc-brand)] shadow-md transition hover:bg-slate-50">
-                Explore spaces to join
+                Explore spaces
             </a>
-            <a href="{{ route('profile') }}"
-                class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
-                Profile
-            </a>
-            <a href="{{ route('dashboard') }}"
-                class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
-                Your spaces
-            </a>
+            @if (auth()->user()->coachesAnySpace())
+                <a href="{{ route('my-coaching') }}"
+                    class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20">
+                    My coaching
+                </a>
+            @endif
         </div>
     </div>
+
+    @if (auth()->user()->coachesAnySpace())
+        <div class="mb-8 rounded-2xl border border-[color-mix(in_srgb,var(--pc-accent)_35%,#e2e8f0)] bg-[color-mix(in_srgb,var(--pc-accent)_10%,white)] px-5 py-4 text-sm text-slate-900 shadow-sm">
+            <a href="{{ route('my-coaching') }}" class="font-semibold text-[var(--pc-brand)] underline decoration-[color-mix(in_srgb,var(--pc-accent)_50%,transparent)] decoration-2 underline-offset-2 hover:opacity-90">My coaching</a>
+            <span class="text-slate-700"> — spaces you run and coach tools.</span>
+        </div>
+    @endif
 
     @if ($courses->isEmpty())
         <div class="rounded-3xl border border-dashed border-slate-300/80 bg-white/90 px-8 py-16 text-center shadow-[var(--pc-shadow)] backdrop-blur-sm">
@@ -38,11 +43,11 @@
                 class="pc-btn-primary mt-8 inline-flex rounded-full px-6 py-3 text-sm font-semibold shadow-md">
                 Explore spaces below
             </a>
-            <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold text-[var(--pc-accent)]">
-                <a href="{{ route('profile') }}" class="hover:underline">Profile</a>
-                <span class="text-white/30">·</span>
-                <a href="{{ route('dashboard') }}" class="hover:underline">Your spaces</a>
-            </div>
+            @if (auth()->user()->coachesAnySpace())
+                <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold text-[var(--pc-accent)]">
+                    <a href="{{ route('my-coaching') }}" class="hover:underline">My coaching</a>
+                </div>
+            @endif
         </div>
     @else
         <div class="grid gap-7 sm:grid-cols-2 xl:grid-cols-3">
@@ -110,9 +115,9 @@
     @endif
 
     <section class="mt-16 scroll-mt-8" id="explore-spaces">
-        <h2 class="text-lg font-bold text-[var(--pc-brand)]">Explore spaces you can join</h2>
+        <h2 class="text-lg font-bold text-[var(--pc-brand)]">Explore spaces</h2>
         <p class="mt-2 max-w-2xl text-sm text-slate-600">
-            Browse a <strong>public catalog</strong>, then sign in on that space or use <strong>Join this space</strong> on the learner catalog when you are ready to learn there.
+            Browse what’s published; join a space when you want to learn there.
         </p>
 
         @if ($discoverSpaces->isNotEmpty())
@@ -145,7 +150,7 @@
             </ul>
         @elseif ($demoTenant)
             <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-sm text-slate-600 shadow-sm">
-                <p>No other discoverable spaces yet (you may already belong to every space here).</p>
+                <p>No other spaces to show here right now.</p>
                 <a href="{{ route('public.catalog', $demoTenant) }}" class="mt-4 inline-flex rounded-full bg-[var(--pc-brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:opacity-95">
                     Open demo catalog ({{ $demoTenant->name }})
                 </a>

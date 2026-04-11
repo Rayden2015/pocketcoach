@@ -20,9 +20,9 @@ class LessonProgressController extends Controller
     {
         abort_unless($lesson->tenant_id === $tenant->id, 404);
 
-        $lesson->load('module.course');
-        $course = $lesson->module?->course;
-        if ($course === null) {
+        $lesson->load(['module.course', 'course']);
+        $course = $lesson->module?->course ?? $lesson->course;
+        if ($course === null || $course->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Invalid lesson.'], 422);
         }
 
@@ -32,6 +32,7 @@ class LessonProgressController extends Controller
 
         $validated = $request->validate([
             'notes' => ['sometimes', 'nullable', 'string', 'max:65535'],
+            'notes_is_public' => ['sometimes', 'boolean'],
             'position_seconds' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'completed' => ['sometimes', 'boolean'],
         ]);
@@ -46,6 +47,12 @@ class LessonProgressController extends Controller
         if (array_key_exists('notes', $validated)) {
             $values['notes'] = $validated['notes'];
         }
+        if ($request->has('notes_is_public')) {
+            $notes = $values['notes'] ?? LessonProgress::query()->where($attributes)->value('notes');
+            $values['notes_is_public'] = ($notes !== null && trim((string) $notes) !== '') && $request->boolean('notes_is_public');
+        } elseif (array_key_exists('notes', $validated) && ($validated['notes'] === null || trim((string) $validated['notes']) === '')) {
+            $values['notes_is_public'] = false;
+        }
         if (array_key_exists('position_seconds', $validated)) {
             $values['position_seconds'] = $validated['position_seconds'];
         }
@@ -54,7 +61,7 @@ class LessonProgressController extends Controller
         }
 
         if ($values === []) {
-            return response()->json(['message' => 'Provide notes, position_seconds, and/or completed.'], 422);
+            return response()->json(['message' => 'Provide notes, notes_is_public, position_seconds, and/or completed.'], 422);
         }
 
         $progress = LessonProgress::query()->updateOrCreate($attributes, $values);
@@ -64,6 +71,7 @@ class LessonProgressController extends Controller
                 'lesson_id' => $progress->lesson_id,
                 'completed_at' => $progress->completed_at?->toIso8601String(),
                 'notes' => $progress->notes,
+                'notes_is_public' => $progress->notes_is_public,
                 'position_seconds' => $progress->position_seconds,
             ],
         ]);

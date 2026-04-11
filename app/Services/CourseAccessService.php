@@ -8,8 +8,12 @@ use App\Models\User;
 
 class CourseAccessService
 {
-    public function canAccessCourse(User $user, Course $course): bool
+    public function canAccessCourse(?User $user, Course $course): bool
     {
+        if ($user === null) {
+            return false;
+        }
+
         if (Enrollment::query()
             ->where('user_id', $user->id)
             ->where('course_id', $course->id)
@@ -32,8 +36,12 @@ class CourseAccessService
     /**
      * @return list<int>
      */
-    public function accessibleCourseIdsForUserInTenant(User $user, int $tenantId): array
+    public function accessibleCourseIdsForUserInTenant(?User $user, int $tenantId): array
     {
+        if ($user === null) {
+            return [];
+        }
+
         $enrollments = Enrollment::query()
             ->where('tenant_id', $tenantId)
             ->where('user_id', $user->id)

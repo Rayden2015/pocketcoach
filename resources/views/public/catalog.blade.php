@@ -17,15 +17,11 @@
 
     <p class="mt-4 max-w-2xl text-xs leading-relaxed text-stone-500">
         @auth
-            <a href="{{ route('learn.catalog', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800">Open learner catalog</a>
-            <span class="text-stone-400"> — </span>
-            same programs with your progress and enrollments.
+            <a href="{{ route('learn.catalog', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800" title="Your enrollments and lesson progress for this space.">Member catalog</a>
         @else
-            You can browse this page without an account.
             <a href="{{ route('space.login', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800">Log in</a>
-            or
-            <a href="{{ route('space.register', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800">register</a>
-            for this space to open courses and use <strong class="font-medium text-stone-600">Enroll free</strong> where a coach has enabled it.
+            <span class="text-stone-400">·</span>
+            <a href="{{ route('space.register', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800" title="Required to enroll in courses on this space.">Register</a>
         @endauth
     </p>
 
@@ -46,7 +42,7 @@
     @endif
 
     <p class="mt-8 text-sm font-medium text-stone-800">Programs &amp; courses</p>
-    <p class="mt-1 text-xs text-stone-500">Featured items appear first. Course order uses popularity when your space tracks catalog views.</p>
+    <p class="mt-1 text-xs text-stone-500" title="Featured items appear first. Order can reflect popularity when the space tracks catalog views.">Featured listings sort first.</p>
 
     @foreach ($programs as $program)
         <section class="mt-8">

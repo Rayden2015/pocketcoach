@@ -5,7 +5,7 @@
 @section('content')
     <div class="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
         <h1 class="text-xl font-semibold">Log in</h1>
-        <p class="mt-2 text-sm text-stone-600">Use the same email and password for every space. After signing in we’ll take you to your home, or straight into your space if you only belong to one.</p>
+        <p class="mt-2 text-sm text-stone-600">One account for all spaces.</p>
         @if ($errors->any())
             <div class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">
                 {{ $errors->first() }}

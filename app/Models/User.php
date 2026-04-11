@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TenantRole;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -76,5 +77,17 @@ class User extends Authenticatable
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Whether the user leads or administrates at least one space (or is platform super-admin).
+     */
+    public function coachesAnySpace(): bool
+    {
+        if ($this->is_super_admin) {
+            return true;
+        }
+
+        return $this->memberships()->whereIn('role', TenantRole::staffValues())->exists();
     }
 }

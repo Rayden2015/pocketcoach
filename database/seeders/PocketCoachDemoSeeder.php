@@ -5,20 +5,35 @@ namespace Database\Seeders;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonProgress;
 use App\Models\Module;
 use App\Models\Product;
 use App\Models\Program;
 use App\Models\ReflectionPrompt;
+use App\Models\ReflectionResponse;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Notifications\ReflectionPromptPublishedNotification;
+use App\Notifications\SubmissionConversationMessageNotification;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Idempotent demo data: two coach spaces, programs, standalone courses, modules, lessons (module + course-level), products, enrollments.
  */
 class PocketCoachDemoSeeder extends Seeder
 {
+    /** Fixed UUIDs so re-running the seeder replaces demo notifications cleanly. */
+    private const ADEOLA_DEMO_NOTIFICATION_IDS = [
+        'a1e00001-0000-4000-8000-000000000001',
+        'a1e00001-0000-4000-8000-000000000002',
+        'a1e00001-0000-4000-8000-000000000003',
+        'a1e00001-0000-4000-8000-000000000004',
+        'a1e00001-0000-4000-8000-000000000005',
+    ];
+
     public function run(): void
     {
         $this->seedSuperAdmin();
@@ -192,6 +207,8 @@ MD);
             $courseReview,
             $courseQuickReset,
         );
+
+        $this->seedAdeolaDummyNotifications($tenant, $coach, $learner);
     }
 
     /**
@@ -310,6 +327,154 @@ MD;
                 );
             }
         });
+    }
+
+    /**
+     * Sample in-app notifications for the Adeola coach + demo learner (bell UI / API).
+     * Uses fixed notification UUIDs so migrate:fresh --seed stays idempotent.
+     */
+    private function seedAdeolaDummyNotifications(Tenant $tenant, User $coach, User $learner): void
+    {
+        DB::table('notifications')->whereIn('id', self::ADEOLA_DEMO_NOTIFICATION_IDS)->delete();
+
+        $prompt = ReflectionPrompt::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_published', true)
+            ->orderByDesc('published_at')
+            ->first();
+
+        $lesson = Lesson::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_published', true)
+            ->orderBy('id')
+            ->first();
+
+        if ($prompt === null || $lesson === null) {
+            return;
+        }
+
+        $reflectionResponse = ReflectionResponse::query()->firstOrCreate(
+            [
+                'reflection_prompt_id' => $prompt->id,
+                'user_id' => $learner->id,
+            ],
+            [
+                'body' => 'I want to finish what I started on the small habits.',
+                'first_submitted_at' => now()->subDays(3),
+            ],
+        );
+
+        $lessonProgress = LessonProgress::query()->firstOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'user_id' => $learner->id,
+                'lesson_id' => $lesson->id,
+            ],
+            [
+                'notes' => 'Noting cues from my morning routine.',
+                'notes_is_public' => false,
+            ],
+        );
+
+        $promptNoticeUrl = route('learn.reflections.show', [$tenant, $prompt], absolute: true);
+        $reflectionThreadUrl = route('submission-conversations.reflection.show', [$tenant, $reflectionResponse], absolute: true);
+        $lessonThreadUrl = route('submission-conversations.lesson.show', [$tenant, $lessonProgress], absolute: true);
+
+        $promptBodyPreview = Str::limit(strip_tags((string) $prompt->body), 200);
+
+        $ids = self::ADEOLA_DEMO_NOTIFICATION_IDS;
+
+        $learner->notifications()->create([
+            'id' => $ids[0],
+            'type' => ReflectionPromptPublishedNotification::class,
+            'data' => [
+                'title' => $prompt->title ?? 'New reflection prompt',
+                'body' => $promptBodyPreview,
+                'reflection_prompt_id' => $prompt->id,
+                'tenant_slug' => $tenant->slug,
+                'url' => $promptNoticeUrl,
+            ],
+            'read_at' => null,
+        ]);
+
+        $learner->notifications()->create([
+            'id' => $ids[1],
+            'type' => SubmissionConversationMessageNotification::class,
+            'data' => [
+                'tenant_id' => $tenant->id,
+                'tenant_slug' => $tenant->slug,
+                'kind' => 'reflection',
+                'message_id' => 0,
+                'author_id' => $coach->id,
+                'author_name' => $coach->name,
+                'body_preview' => 'Love this line of thinking — what is one next step you could take in the next 24 hours?',
+                'reflection_response_id' => $reflectionResponse->id,
+                'lesson_progress_id' => null,
+                'title' => 'Message from '.$coach->name,
+                'url' => $reflectionThreadUrl,
+            ],
+            'read_at' => null,
+        ]);
+
+        $learner->notifications()->create([
+            'id' => $ids[2],
+            'type' => SubmissionConversationMessageNotification::class,
+            'data' => [
+                'tenant_id' => $tenant->id,
+                'tenant_slug' => $tenant->slug,
+                'kind' => 'lesson',
+                'message_id' => 0,
+                'author_id' => $coach->id,
+                'author_name' => $coach->name,
+                'body_preview' => 'Try stacking your new habit right after pouring coffee.',
+                'reflection_response_id' => null,
+                'lesson_progress_id' => $lessonProgress->id,
+                'title' => 'Message from '.$coach->name,
+                'url' => $lessonThreadUrl,
+            ],
+            'read_at' => now()->subDay(),
+        ]);
+
+        $coach->notifications()->create([
+            'id' => $ids[3],
+            'type' => SubmissionConversationMessageNotification::class,
+            'data' => [
+                'tenant_id' => $tenant->id,
+                'tenant_slug' => $tenant->slug,
+                'kind' => 'reflection',
+                'message_id' => 0,
+                'author_id' => $learner->id,
+                'author_name' => $learner->name,
+                'body_preview' => 'Thanks — I will try the 5-minute version tonight.',
+                'reflection_response_id' => $reflectionResponse->id,
+                'lesson_progress_id' => null,
+                'title' => 'Message from '.$learner->name,
+                'url' => $reflectionThreadUrl,
+            ],
+            'read_at' => null,
+        ]);
+
+        $coach->notifications()->create([
+            'id' => $ids[4],
+            'type' => SubmissionConversationMessageNotification::class,
+            'data' => [
+                'tenant_id' => $tenant->id,
+                'tenant_slug' => $tenant->slug,
+                'kind' => 'lesson',
+                'message_id' => 0,
+                'author_id' => $learner->id,
+                'author_name' => $learner->name,
+                'body_preview' => 'Can you check if my notes on the cue are on the right track?',
+                'reflection_response_id' => null,
+                'lesson_progress_id' => $lessonProgress->id,
+                'title' => 'Message from '.$learner->name,
+                'url' => $lessonThreadUrl,
+            ],
+            'read_at' => now()->subHours(3),
+        ]);
+
+        // Expected unread counts for the bell / GET …/notifications/unread-count:
+        // learner@pocketcoach.test → 2, coach@pocketcoach.test → 1.
     }
 
     private function seedNorthstarTenant(): void

@@ -5,6 +5,16 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
+/*
+|--------------------------------------------------------------------------
+| Environment tag for log filenames (daily + emergency paths)
+|--------------------------------------------------------------------------
+| Daily files look like: laravel-local-2026-04-06.log, laravel-production-2026-04-06.log
+*/
+$logEnvTag = preg_replace('/[^a-z0-9._-]+/i', '-', strtolower((string) env('APP_ENV', 'production')));
+$logEnvTag = $logEnvTag !== '' ? $logEnvTag : 'production';
+$dailyLogPath = storage_path('logs/laravel-'.$logEnvTag.'.log');
+
 return [
 
     /*
@@ -54,20 +64,20 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
         'single' => [
             'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => $dailyLogPath,
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
+            'path' => $dailyLogPath,
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
@@ -124,7 +134,7 @@ return [
         ],
 
         'emergency' => [
-            'path' => storage_path('logs/laravel.log'),
+            'path' => storage_path('logs/laravel-'.$logEnvTag.'-emergency.log'),
         ],
 
     ],

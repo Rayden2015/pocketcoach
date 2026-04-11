@@ -45,6 +45,7 @@ class ContinueLearningController extends Controller
                 'progress' => $progress === null ? null : [
                     'completed_at' => $progress->completed_at?->toIso8601String(),
                     'notes' => $progress->notes,
+                    'notes_is_public' => $progress->notes_is_public,
                     'position_seconds' => $progress->position_seconds,
                 ],
             ],

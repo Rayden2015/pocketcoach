@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api\V1\Learner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
 use App\Services\CourseAccessService;
+use App\Services\CourseCurriculumService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,10 +34,7 @@ class LearningSummaryController extends Controller
 
         $rows = [];
         foreach ($courses as $course) {
-            $lessonIds = Lesson::query()
-                ->whereHas('module', fn ($q) => $q->where('course_id', $course->id)->where('is_published', true))
-                ->where('is_published', true)
-                ->pluck('id');
+            $lessonIds = CourseCurriculumService::publishedLessonIdsForCourse((int) $course->id);
 
             $total = $lessonIds->count();
             $completed = $lessonIds->isEmpty()

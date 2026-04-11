@@ -6,19 +6,21 @@ use App\Enums\TenantRole;
 use App\Models\ReflectionPrompt;
 use App\Models\User;
 use App\Notifications\ReflectionPromptPublishedNotification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Notification;
 
-class NotifyTenantLearnersOfReflectionPrompt implements ShouldQueue
+/**
+ * Dispatched synchronously from the observer (does not implement ShouldQueue)
+ * so the bus runs handle() immediately; individual {@see ReflectionPromptPublishedNotification}
+ * messages remain queueable.
+ */
+class NotifyTenantLearnersOfReflectionPrompt
 {
     use Queueable;
 
     public function __construct(
         public int $reflectionPromptId,
-    ) {
-        $this->afterCommit();
-    }
+    ) {}
 
     public function handle(): void
     {

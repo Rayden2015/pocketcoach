@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantStaff;
+use App\Http\Middleware\SyncSentryScope;
 use App\Http\Middleware\ValidateTaskBoardWebhookSecret;
 use App\Models\Tenant;
 use Illuminate\Foundation\Application;
@@ -17,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend([
+            AssignRequestId::class,
+            SyncSentryScope::class,
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request) {
             $tenant = $request->route('tenant');
             if ($tenant instanceof Tenant) {
@@ -25,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return route('login');
         });
-        $middleware->redirectUsersTo(fn () => route('dashboard'));
+        $middleware->redirectUsersTo(fn () => route('my-coaching'));
 
         $middleware->alias([
             'tenant.staff' => EnsureTenantStaff::class,

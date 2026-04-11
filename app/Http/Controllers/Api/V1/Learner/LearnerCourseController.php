@@ -57,6 +57,7 @@ class LearnerCourseController extends Controller
                 'progress' => $pr === null ? null : [
                     'completed_at' => $pr->completed_at?->toIso8601String(),
                     'notes' => $pr->notes,
+                    'notes_is_public' => $pr->notes_is_public,
                     'position_seconds' => $pr->position_seconds,
                 ],
             ];

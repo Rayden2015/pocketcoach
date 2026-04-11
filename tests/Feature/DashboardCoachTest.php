@@ -41,7 +41,7 @@ class DashboardCoachTest extends TestCase
         ]);
 
         $this->actingAs($coach);
-        $response = $this->get('/dashboard');
+        $response = $this->get('/my-coaching');
         $response->assertOk();
         $response->assertSee('Programs &amp; courses', false);
         $response->assertSee('Daily reflections', false);

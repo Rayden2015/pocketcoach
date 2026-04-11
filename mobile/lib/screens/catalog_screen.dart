@@ -184,12 +184,12 @@ class CatalogScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No published programs for this space.',
+                          'No catalog content for this space.',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Check the slug or ask your coach to publish content.',
+                          'Check the slug or ask your coach to publish programs or single courses.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),

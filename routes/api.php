@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\V1\Learner\LearnerCourseController;
 use App\Http\Controllers\Api\V1\Learner\LearnerReflectionController;
 use App\Http\Controllers\Api\V1\Learner\LearningSummaryController;
 use App\Http\Controllers\Api\V1\Learner\LessonProgressController;
+use App\Http\Controllers\Api\V1\Learner\PeerContentController;
+use App\Http\Controllers\Api\V1\Learner\SubmissionConversationController as ApiSubmissionConversationController;
 use App\Http\Controllers\Api\V1\PaystackPaymentController;
 use App\Http\Controllers\Api\V1\TaskBoardWebhookController;
 use App\Http\Controllers\Api\V1\TenantBrandingController;
@@ -38,6 +40,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/notifications', [UserNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
+        Route::post('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead']);
+        Route::patch('/notifications/{id}', [UserNotificationController::class, 'markAsRead']);
 
         Route::get('/tenants/{tenant}/catalog', [CatalogController::class, 'index']);
         Route::get('/tenants/{tenant}/continue', [ContinueLearningController::class, 'show']);
@@ -45,8 +49,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/tenants/{tenant}/join', [TenantJoinController::class, 'store']);
         Route::get('/tenants/{tenant}/courses/{course}', [LearnerCourseController::class, 'show']);
         Route::put('/tenants/{tenant}/lessons/{lesson}/progress', [LessonProgressController::class, 'upsert']);
+        Route::get('/tenants/{tenant}/lessons/{lesson}/public-notes', [PeerContentController::class, 'lessonPublicNotes']);
+        Route::get('/tenants/{tenant}/lesson-progress/{lessonProgress}/conversation-messages', [ApiSubmissionConversationController::class, 'indexLesson']);
+        Route::post('/tenants/{tenant}/lesson-progress/{lessonProgress}/conversation-messages', [ApiSubmissionConversationController::class, 'storeLesson']);
 
         Route::get('/tenants/{tenant}/reflection-prompts/latest', [LearnerReflectionController::class, 'latest']);
+        Route::get('/tenants/{tenant}/reflection-prompts/{reflection_prompt}/public-responses', [PeerContentController::class, 'reflectionPublicResponses']);
+        Route::get('/tenants/{tenant}/reflection-responses/{reflectionResponse}/conversation-messages', [ApiSubmissionConversationController::class, 'indexReflection']);
+        Route::post('/tenants/{tenant}/reflection-responses/{reflectionResponse}/conversation-messages', [ApiSubmissionConversationController::class, 'storeReflection']);
         Route::get('/tenants/{tenant}/reflection-prompts/{reflection_prompt}', [LearnerReflectionController::class, 'show']);
         Route::post('/tenants/{tenant}/reflection-prompts/{reflection_prompt}/view', [LearnerReflectionController::class, 'recordView']);
         Route::put('/tenants/{tenant}/reflection-prompts/{reflection_prompt}/response', [LearnerReflectionController::class, 'upsertResponse']);

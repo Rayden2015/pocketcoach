@@ -8,8 +8,10 @@ class LearningCourseSummary {
   });
 
   factory LearningCourseSummary.fromJson(Map<String, dynamic> j) {
+    final raw = j['course_id'];
+    final courseId = raw is int ? raw : (raw is num ? raw.toInt() : int.parse(raw.toString()));
     return LearningCourseSummary(
-      courseId: j['course_id'] as int,
+      courseId: courseId,
       title: j['title'] as String,
       slug: j['slug'] as String,
       lessonsTotal: j['lessons_total'] as int,

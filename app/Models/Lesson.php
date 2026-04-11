@@ -110,6 +110,14 @@ class Lesson extends Model
     }
 
     /**
+     * Course for curriculum display (module-based or standalone root lessons).
+     */
+    public function courseForDisplay(): ?Course
+    {
+        return $this->module?->course ?? $this->course;
+    }
+
+    /**
      * @return BelongsTo<Module, $this>
      */
     public function module(): BelongsTo

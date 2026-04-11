@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pocket_coach_mobile/providers/engagement_providers.dart';
 import 'package:pocket_coach_mobile/screens/catalog_screen.dart';
 import 'package:pocket_coach_mobile/screens/continue_screen.dart';
 import 'package:pocket_coach_mobile/screens/progress_screen.dart';
 
-class MainTabsScreen extends StatefulWidget {
+class MainTabsScreen extends ConsumerStatefulWidget {
   const MainTabsScreen({super.key});
 
   @override
-  State<MainTabsScreen> createState() => _MainTabsScreenState();
+  ConsumerState<MainTabsScreen> createState() => _MainTabsScreenState();
 }
 
-class _MainTabsScreenState extends State<MainTabsScreen> {
+class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
   var _index = 0;
 
   @override
   Widget build(BuildContext context) {
+    final unread = ref.watch(unreadNotificationCountProvider);
+
     return Scaffold(
       body: IndexedStack(
         index: _index,
@@ -44,6 +49,23 @@ class _MainTabsScreenState extends State<MainTabsScreen> {
             label: 'Progress',
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () {
+          ref.invalidate(notificationsProvider);
+          ref.invalidate(unreadNotificationCountProvider);
+          context.push('/notifications');
+        },
+        tooltip: 'Notifications',
+        child: unread.when(
+          loading: () => const Icon(Icons.notifications_outlined),
+          error: (_, __) => const Icon(Icons.notifications_outlined),
+          data: (count) => Badge(
+            isLabelVisible: count > 0,
+            label: Text(count > 99 ? '99+' : '$count'),
+            child: const Icon(Icons.notifications_outlined),
+          ),
+        ),
       ),
     );
   }

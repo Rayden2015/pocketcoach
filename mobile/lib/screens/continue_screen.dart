@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocket_coach_mobile/providers/engagement_providers.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
@@ -27,6 +28,7 @@ class ContinueScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(continueLearningProvider);
+          ref.invalidate(reflectionLatestProvider);
           await ref.read(continueLearningProvider.future);
         },
         child: cont.when(
@@ -58,7 +60,9 @@ class ContinueScreen extends ConsumerWidget {
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  const _ReflectionPromptCard(),
+                  const SizedBox(height: 16),
                   Icon(
                     Icons.check_circle_outline,
                     size: 64,
@@ -93,7 +97,8 @@ class ContinueScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                const _ReflectionPromptCard(),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -147,6 +152,34 @@ class ContinueScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ReflectionPromptCard extends ConsumerWidget {
+  const _ReflectionPromptCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reflection = ref.watch(reflectionLatestProvider);
+    return reflection.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (prompt) {
+        if (prompt == null) {
+          return const SizedBox.shrink();
+        }
+        return Card(
+          color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.35),
+          child: ListTile(
+            leading: Icon(Icons.edit_note, color: Theme.of(context).colorScheme.primary),
+            title: Text(prompt.title),
+            subtitle: const Text('Reflection prompt — tap to respond'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/reflection/${prompt.id}'),
+          ),
+        );
+      },
     );
   }
 }

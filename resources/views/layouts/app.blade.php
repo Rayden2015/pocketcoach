@@ -15,7 +15,7 @@
 <body class="pc-shell font-sans antialiased text-slate-900">
     <header class="pc-header-glass sticky top-0 z-50 backdrop-blur-md">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3.5">
-            <a href="{{ auth()->check() ? route('my-learning') : route('home') }}" class="shrink-0 text-lg font-bold tracking-tight text-[var(--pc-brand)]">
+            <a href="{{ auth()->check() ? (auth()->user()->coachesAnySpace() ? route('my-coaching') : route('my-learning')) : route('home') }}" class="shrink-0 text-lg font-bold tracking-tight text-[var(--pc-brand)]">
                 {{ config('app.name') }}
             </a>
             @auth
@@ -27,17 +27,42 @@
             @endauth
             <nav class="ml-auto flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-600 md:gap-2">
                 @auth
-                    <a href="{{ route('my-learning') }}"
-                        class="inline-flex items-center rounded-full bg-[var(--pc-brand)] px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:brightness-110">
+                    @php($navActive = 'inline-flex items-center rounded-full bg-[var(--pc-brand)] px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:brightness-110')
+                    @php($navIdle = 'rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]')
+                    <a href="{{ route('my-learning') }}" class="{{ request()->routeIs('my-learning') ? $navActive : $navIdle }}">
                         My learning
                     </a>
+                    @if(auth()->user()->coachesAnySpace())
+                        <a href="{{ route('my-coaching') }}" class="{{ request()->routeIs('my-coaching') ? $navActive : $navIdle }}">
+                            My coaching
+                        </a>
+                    @endif
                     @if(auth()->user()->is_super_admin)
                         <a href="{{ route('platform.tenants.index') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Platform</a>
                     @endif
-                    <a href="{{ route('profile') }}" class="max-w-[10rem] truncate rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[12rem]" title="{{ auth()->user()->email }}">
-                        {{ auth()->user()->name ?: auth()->user()->email }}
+                    <div id="pc-notifications-bell" class="relative shrink-0" data-unread-url="{{ route('notifications.unread-count') }}" data-list-url="{{ route('notifications.index') }}" data-read-all-url="{{ route('notifications.read-all') }}" data-read-one-base="{{ url('/notifications') }}">
+                        <button type="button" class="pc-ring-focus relative inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 hover:bg-white/80 hover:text-[var(--pc-brand)]" aria-label="Notifications" aria-expanded="false" aria-haspopup="true" data-bell-toggle>
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            <span class="pointer-events-none absolute -right-0.5 -top-0.5 hidden h-5 min-w-5 items-center justify-center rounded-full bg-[var(--pc-accent)] px-1 text-[10px] font-bold leading-none text-white shadow-sm" data-unread-badge></span>
+                        </button>
+                        <div class="absolute right-0 z-[60] mt-2 hidden w-[min(22rem,calc(100vw-2rem))] origin-top-right rounded-2xl border border-slate-200/90 bg-white/95 py-2 shadow-xl backdrop-blur-sm" data-bell-panel hidden role="menu">
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-3 pb-2">
+                                <p class="text-sm font-semibold text-slate-800">Notifications</p>
+                                <button type="button" class="text-xs font-semibold text-[var(--pc-accent)] hover:underline disabled:opacity-40" data-mark-all-read>Mark all as read</button>
+                            </div>
+                            <ul class="max-h-[min(24rem,70vh)] overflow-y-auto" data-bell-list role="none"></ul>
+                            <p class="hidden px-3 py-6 text-center text-sm text-slate-500" data-bell-empty>You're all caught up.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('profile') }}" class="inline-flex max-w-[min(14rem,calc(100vw-10rem))] items-center gap-2 truncate rounded-full px-3 py-2 text-slate-700 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[16rem]" title="{{ auth()->user()->email }}" aria-label="Profile and account settings">
+                        <svg class="h-5 w-5 shrink-0 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                        <span class="truncate">{{ auth()->user()->name ?: auth()->user()->email }}</span>
                     </a>
-                    <a href="{{ route('profile') }}" class="hidden rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)] sm:inline">Profile</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="rounded-full px-3 py-2 text-slate-500 hover:bg-white/80 hover:text-slate-800">Log out</button>
@@ -70,8 +95,8 @@
                                         {{ ucfirst($tenantMembership->role) }} · {{ $tenant->name }}
                                     </span>
                                 @else
-                                    <span class="inline-flex max-w-prose rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-amber-200/80">
-                                        Not a member of this space yet — use <strong class="font-semibold">Join this space</strong> on the catalog when you are learning here.
+                                    <span class="inline-flex max-w-prose rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-amber-200/80" title="Open the learner catalog for this space and use Join this space when you want to learn here.">
+                                        Not a member yet — join from the catalog.
                                     </span>
                                 @endif
                                 @if (auth()->user()->is_super_admin)
@@ -83,8 +108,8 @@
                             <a href="{{ route('profile') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
                                 Profile
                             </a>
-                            <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
-                                Your spaces
+                            <a href="{{ route('my-coaching') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
+                                My coaching
                             </a>
                         </div>
                     </div>

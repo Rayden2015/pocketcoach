@@ -53,59 +53,7 @@
     @else
         <ul class="mt-8 space-y-4">
             @foreach ($tenants as $tenant)
-                @php
-                    $m = $memberships->get($tenant->id);
-                    $isStaff = $m && in_array($m->role, \App\Enums\TenantRole::staffValues(), true);
-                    $snap = $coachSnapshots[$tenant->id] ?? null;
-                @endphp
-                <li class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm @if ($isStaff) ring-1 ring-teal-100 @endif">
-                    <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                            @if ($isStaff)
-                                <p class="text-[11px] font-semibold uppercase tracking-wide text-teal-700">Space you lead</p>
-                            @endif
-                            <h2 class="font-semibold text-stone-900">{{ $tenant->name }}</h2>
-                            <p class="text-xs text-stone-500">{{ $tenant->slug }} @if ($m) · <span class="font-medium text-stone-700">{{ $m->role }}</span> @else · <span class="text-amber-700">Enrolled only — join as member from catalog if needed</span> @endif</p>
-                            <p class="mt-2 break-all text-xs text-stone-500">
-                                Public link:
-                                <a href="{{ route('public.catalog', $tenant) }}" class="font-medium text-teal-700 hover:underline">{{ $tenant->publicUrl('catalog') }}</a>
-                            </p>
-                        </div>
-                    </div>
-
-                    @if ($isStaff && $snap)
-                        <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            <div class="rounded-xl bg-stone-50 px-3 py-2">
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-stone-500">Learners enrolled</p>
-                                <p class="text-lg font-semibold text-stone-900">{{ $snap['learners_with_enrollment'] }}</p>
-                                <p class="text-[10px] text-stone-500">{{ $snap['active_enrollments'] }} active seats</p>
-                            </div>
-                            <div class="rounded-xl bg-stone-50 px-3 py-2">
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-stone-500">Members (learner role)</p>
-                                <p class="text-lg font-semibold text-stone-900">{{ $snap['learner_members'] }}</p>
-                            </div>
-                            <div class="rounded-xl bg-stone-50 px-3 py-2">
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-stone-500">Programs live / draft</p>
-                                <p class="text-lg font-semibold text-stone-900">{{ $snap['programs_live'] }} / {{ $snap['programs_draft'] }}</p>
-                            </div>
-                            <div class="rounded-xl bg-stone-50 px-3 py-2">
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-stone-500">Completions (7d)</p>
-                                <p class="text-lg font-semibold text-stone-900">{{ $snap['lesson_completions_7d'] }}</p>
-                                <p class="text-[10px] text-stone-500">{{ $snap['courses_live'] }} courses · {{ $snap['reflection_prompts_live'] }} live prompts</p>
-                            </div>
-                        </div>
-                    @endif
-
-                    <div class="mt-4 flex flex-wrap gap-2 text-sm">
-                        @if ($isStaff)
-                            <a href="{{ route('coach.programs.index', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 font-medium text-white hover:bg-teal-700">Programs &amp; courses</a>
-                            <a href="{{ route('coach.reflections.index', $tenant) }}" class="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 font-medium text-amber-950 hover:bg-amber-100">Daily reflections</a>
-                            <a href="{{ route('public.catalog', $tenant) }}" class="rounded-full border border-stone-300 px-3 py-2 text-stone-800 hover:border-teal-400">Public catalog</a>
-                        @endif
-                        <a href="{{ route('learn.catalog', $tenant) }}" class="rounded-full border border-stone-300 px-3 py-2 hover:border-teal-400 hover:text-teal-800">Learner catalog</a>
-                        <a href="{{ route('learn.continue', $tenant) }}" class="rounded-full bg-stone-900 px-3 py-2 text-white hover:bg-stone-800">Continue</a>
-                    </div>
-                </li>
+                @include('my-coaching._space-card', ['tenant' => $tenant, 'memberships' => $memberships, 'coachSnapshots' => $coachSnapshots ?? []])
             @endforeach
         </ul>
     @endif

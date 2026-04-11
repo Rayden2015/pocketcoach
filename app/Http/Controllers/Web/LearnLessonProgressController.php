@@ -20,8 +20,9 @@ class LearnLessonProgressController extends Controller
     {
         abort_unless($lesson->tenant_id === $tenant->id, 404);
 
-        $lesson->load('module.course');
-        $course = $lesson->module->course ?? abort(404);
+        $lesson->load(['module.course', 'course']);
+        $course = $lesson->module?->course ?? $lesson->course;
+        abort_unless($course !== null && $course->tenant_id === $tenant->id, 404);
 
         if (! $this->access->canAccessCourse($request->user(), $course)) {
             abort(403);
@@ -29,6 +30,7 @@ class LearnLessonProgressController extends Controller
 
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:65535'],
+            'notes_is_public' => ['nullable', 'boolean'],
             'mark_complete' => ['nullable', 'in:0,1'],
         ]);
 
@@ -38,8 +40,15 @@ class LearnLessonProgressController extends Controller
             'lesson_id' => $lesson->id,
         ];
 
+        $notes = $validated['notes'] ?? null;
+        $notesIsPublic = $request->boolean('notes_is_public');
+        if ($notes === null || trim((string) $notes) === '') {
+            $notesIsPublic = false;
+        }
+
         $values = [
-            'notes' => $validated['notes'] ?? null,
+            'notes' => $notes,
+            'notes_is_public' => $notesIsPublic,
             'completed_at' => ($validated['mark_complete'] ?? '0') === '1' ? now() : null,
         ];
 

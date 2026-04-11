@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-pocket-coach-api",
 		"name": "Pocket Coach API",
-		"description": "Laravel Sanctum API for Pocket Coach LMS.\n\n**Setup:** Import this file in Postman. Set collection variables: `base_url` (e.g. `http://127.0.0.1:8000/api`), `tenant_slug` (tenant **slug**, not numeric id).\n\n**Auth:** Run **Register** or **Login**; a test script saves `token` to collection variables. Other requests use `Authorization: Bearer {{token}}`.\n\n**Note:** `{{tenant_slug}}` must match a row in `tenants.slug`. Admin routes require a user with staff role (`owner`, `admin`, or `instructor`) on that tenant.",
+		"description": "Laravel Sanctum API for Pocket Coach LMS.\n\n**Setup:** Import this file in Postman. Set collection variables: `base_url` (e.g. `http://127.0.0.1:8000/api`), `tenant_slug` (tenant **slug**, not numeric id).\n\n**Auth:** Run **Register** or **Login**; a test script saves `token` to collection variables. Other requests use `Authorization: Bearer {{token}}`.\n\n**Catalog:** The list may include a synthetic **Single courses** program (`id` 0, `slug` `_standalone`) when the tenant has published courses without a program (`program_id` null).\n\n**Reflections:** Endpoints return **404** when reflections are disabled for the tenant. **Latest** returns 200 with `{\"data\": null}` when there is no published prompt.\n\n**Note:** `{{tenant_slug}}` must match a row in `tenants.slug`. Admin routes require a user with staff role (`owner`, `admin`, or `instructor`) on that tenant.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -13,7 +13,9 @@
 		{ "key": "course_id", "value": "1" },
 		{ "key": "module_id", "value": "1" },
 		{ "key": "lesson_id", "value": "1" },
-		{ "key": "product_id", "value": "1" }
+		{ "key": "product_id", "value": "1" },
+		{ "key": "reflection_prompt_id", "value": "1" },
+		{ "key": "notification_id", "value": "" }
 	],
 	"auth": {
 		"type": "bearer",
@@ -176,7 +178,88 @@
 							"mode": "raw",
 							"raw": "{\n  \"completed\": true,\n  \"position_seconds\": 0,\n  \"notes\": \"via Postman\"\n}"
 						},
-						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/lessons/{{lesson_id}}/progress"
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/lessons/{{lesson_id}}/progress",
+						"description": "Works for lessons under a module or **root** lessons (`module_id` null) as long as `course_id` is set."
+					}
+				},
+				{
+					"name": "Learning summary",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/learning-summary"
+					}
+				},
+				{
+					"name": "Notifications — list",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/notifications"
+					}
+				},
+				{
+					"name": "Notifications — unread count",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/notifications/unread-count"
+					}
+				},
+				{
+					"name": "Notifications — mark read",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/notifications/{{notification_id}}",
+						"description": "Set `notification_id` from the list response (`id` is a UUID string)."
+					}
+				},
+				{
+					"name": "Notifications — mark all read",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/notifications/read-all"
+					}
+				},
+				{
+					"name": "Reflection — latest",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/reflection-prompts/latest"
+					}
+				},
+				{
+					"name": "Reflection — show",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/reflection-prompts/{{reflection_prompt_id}}"
+					}
+				},
+				{
+					"name": "Reflection — record view",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/reflection-prompts/{{reflection_prompt_id}}/view"
+					}
+				},
+				{
+					"name": "Reflection — save response",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"body\": \"My reflection text from Postman.\"\n}"
+						},
+						"url": "{{base_url}}/v1/tenants/{{tenant_slug}}/reflection-prompts/{{reflection_prompt_id}}/response"
 					}
 				}
 			]

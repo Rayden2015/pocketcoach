@@ -17,6 +17,10 @@
             <directory>app</directory>
         </include>
     </source>
+    <!--
+      SQLite uses :memory: — PHPUnit never touches your dev database file.
+      (Your .env DB_DATABASE is ignored for tests unless you remove these lines.)
+    -->
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

@@ -25,6 +25,7 @@ return [
         'livewire',
         'login',
         'logout',
+        'my-coaching',
         'my-learning',
         'platform',
         'register',

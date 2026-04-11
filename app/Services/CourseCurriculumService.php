@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Course;
+use App\Models\Lesson;
 use Illuminate\Support\Collection;
 
 final class CourseCurriculumService
@@ -22,7 +23,7 @@ final class CourseCurriculumService
     /**
      * Course-level lessons first, then each module’s lessons (published only when relations loaded with filters).
      *
-     * @return Collection<int, \App\Models\Lesson>
+     * @return Collection<int, Lesson>
      */
     public static function flattenedPublishedLessons(Course $course): Collection
     {
@@ -50,5 +51,22 @@ final class CourseCurriculumService
         }
 
         return $root->concat($fromModules)->values();
+    }
+
+    /**
+     * Published lesson ids for a course: root lessons (no module) plus lessons under published modules.
+     *
+     * @return Collection<int, int>
+     */
+    public static function publishedLessonIdsForCourse(int $courseId): Collection
+    {
+        return Lesson::query()
+            ->where('course_id', $courseId)
+            ->where('is_published', true)
+            ->where(function ($q): void {
+                $q->whereNull('module_id')
+                    ->orWhereHas('module', fn ($m) => $m->where('is_published', true));
+            })
+            ->pluck('id');
     }
 }

@@ -7,7 +7,10 @@
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-stone-600">Publish now or <strong>schedule</strong> (default 7:00 app time). Scheduled posts need <code class="rounded bg-stone-100 px-1 text-xs">schedule:work</code> or cron.</p>
-        <a href="{{ route('coach.reflections.create', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New prompt</a>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('coach.learner-submissions.index', $tenant) }}" class="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-950 hover:bg-amber-100">Learner submissions</a>
+            <a href="{{ route('coach.reflections.create', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">New prompt</a>
+        </div>
     </div>
 
     <ul class="mt-2 divide-y divide-stone-200 rounded-2xl border border-stone-200 bg-white shadow-sm">

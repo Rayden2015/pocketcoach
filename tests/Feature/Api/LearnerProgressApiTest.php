@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonProgress;
 use App\Models\Module;
 use App\Models\Program;
 use App\Models\Tenant;
@@ -98,6 +99,112 @@ class LearnerProgressApiTest extends TestCase
 
         $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [])
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Provide notes, position_seconds, and/or completed.');
+            ->assertJsonPath('message', 'Provide notes, notes_is_public, position_seconds, and/or completed.');
+    }
+
+    public function test_lesson_progress_accepts_root_lesson_without_module(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        $program = Program::query()->create([
+            'tenant_id' => $tenant->id,
+            'title' => 'P',
+            'slug' => 'p',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $course = Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => $program->id,
+            'title' => 'C',
+            'slug' => 'c',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $lesson = Lesson::query()->create([
+            'tenant_id' => $tenant->id,
+            'course_id' => $course->id,
+            'module_id' => null,
+            'title' => 'Root L',
+            'slug' => 'root-l',
+            'lesson_type' => 'text',
+            'body' => 'Hi',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/v1/tenants/{$tenant->slug}/lessons/{$lesson->id}/progress", [
+            'completed' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.lesson_id', $lesson->id);
+    }
+
+    public function test_lesson_progress_persists_notes_is_public_when_notes_present(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'notes' => 'Visible to peers',
+            'notes_is_public' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.notes_is_public', true);
+
+        $this->assertDatabaseHas('lesson_progress', [
+            'user_id' => $user->id,
+            'lesson_id' => $data['lesson']->id,
+            'notes_is_public' => true,
+        ]);
+
+        $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/courses/{$data['course']->id}")
+            ->assertOk()
+            ->assertJsonFragment(['notes_is_public' => true]);
+    }
+
+    public function test_lesson_progress_clears_notes_is_public_when_notes_cleared(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        LessonProgress::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'lesson_id' => $data['lesson']->id,
+            'notes' => 'Was public',
+            'notes_is_public' => true,
+        ]);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'notes' => '',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.notes_is_public', false);
     }
 }

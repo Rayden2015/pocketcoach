@@ -17,8 +17,10 @@ class CourseDetail {
         }
       }
     }
+    final idRaw = j['id'];
+    final cid = idRaw is int ? idRaw : (idRaw is num ? idRaw.toInt() : int.parse(idRaw.toString()));
     return CourseDetail(
-      id: j['id'] as int,
+      id: cid,
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
@@ -78,8 +80,10 @@ class ModuleOutline {
         }
       }
     }
+    final midRaw = j['id'];
+    final mid = midRaw is int ? midRaw : (midRaw is num ? midRaw.toInt() : int.parse(midRaw.toString()));
     return ModuleOutline(
-      id: j['id'] as int,
+      id: mid,
       title: j['title'] as String,
       slug: j['slug'] as String,
       lessons: lessons,
@@ -96,20 +100,24 @@ class LessonProgressSnapshot {
   LessonProgressSnapshot({
     this.completedAt,
     this.notes,
+    this.notesIsPublic = false,
     this.positionSeconds,
   });
 
   factory LessonProgressSnapshot.fromJson(Map<String, dynamic> j) {
     final ps = j['position_seconds'];
+    final nip = j['notes_is_public'];
     return LessonProgressSnapshot(
       completedAt: j['completed_at'] as String?,
       notes: j['notes'] as String?,
+      notesIsPublic: nip is bool ? nip : (nip == true),
       positionSeconds: ps is int ? ps : (ps is num ? ps.toInt() : null),
     );
   }
 
   final String? completedAt;
   final String? notes;
+  final bool notesIsPublic;
   final int? positionSeconds;
 
   bool get isComplete =>
@@ -134,8 +142,10 @@ class LessonOutline {
     if (prRaw is Map<String, dynamic>) {
       pr = LessonProgressSnapshot.fromJson(prRaw);
     }
+    final lidRaw = j['id'];
+    final lid = lidRaw is int ? lidRaw : (lidRaw is num ? lidRaw.toInt() : int.parse(lidRaw.toString()));
     return LessonOutline(
-      id: j['id'] as int,
+      id: lid,
       title: j['title'] as String,
       slug: j['slug'] as String,
       lessonType: j['lesson_type'] as String? ?? 'text',

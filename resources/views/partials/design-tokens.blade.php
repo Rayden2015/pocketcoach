@@ -1,10 +1,23 @@
-{{-- Default learner shell theme; tenant branding overrides when primary/accent are set. --}}
+{{--
+    A space is a tenant (one coach practice + learners).
+
+    • On /{slug}/… routes we use that tenant’s branding (primary/accent).
+    • On platform routes (/my-learning, /profile, /my-coaching, /, etc.) we always use the default
+      palette so the app shell stays consistent when you move between spaces and account-wide pages.
+
+    Theme follows request()->route('tenant') only (path-based tenancy), so global pages never pick up
+    a stray $tenant variable from partials.
+--}}
 @php
+    use App\Models\Tenant;
+
     $brand = '#1a3a5c';
     $accent = '#0d9488';
-    if (isset($tenant) && is_object($tenant) && is_array($tenant->branding ?? null)) {
-        $brand = $tenant->branding['primary'] ?? $brand;
-        $accent = $tenant->branding['accent'] ?? $accent;
+
+    $tenantForTheme = request()->route('tenant');
+    if ($tenantForTheme instanceof Tenant && is_array($tenantForTheme->branding ?? null)) {
+        $brand = $tenantForTheme->branding['primary'] ?? $brand;
+        $accent = $tenantForTheme->branding['accent'] ?? $accent;
     }
 @endphp
 <style>
