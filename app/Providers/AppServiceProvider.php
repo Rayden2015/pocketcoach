@@ -15,6 +15,7 @@ use App\Services\TaskBoard\NullTaskBoardGateway;
 use App\Services\TaskBoard\TrelloTaskBoardGateway;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // MySQL utf8mb4: indexed varchar(255) can exceed InnoDB max key length (~1000 bytes on some hosts).
+        // Set in register() before boot/migrate; unqualified Blueprint::string() uses this at migration runtime.
+        Schema::defaultStringLength(191);
+
         $this->app->singleton(PaystackClient::class, function ($app): PaystackClient {
             return new PaystackClient(
                 secretKey: (string) config('services.paystack.secret_key', ''),

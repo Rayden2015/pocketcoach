@@ -4,6 +4,7 @@
 .env
 .env.backup
 .env.dusk.local
+.env.dusk.local.tmp
 database/dusk.sqlite
 .env.production
 .phpactor.json

@@ -9,9 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('courses', function (Blueprint $table): void {
-            $table->dropForeign(['program_id']);
-        });
+        $this->dropForeignKeyIfExists('courses', 'program_id');
         Schema::table('courses', function (Blueprint $table): void {
             $table->dropUnique(['program_id', 'slug']);
         });
@@ -45,9 +43,7 @@ return new class extends Migration
             );
         }
 
-        Schema::table('lessons', function (Blueprint $table): void {
-            $table->dropForeign(['module_id']);
-        });
+        $this->dropForeignKeyIfExists('lessons', 'module_id');
         Schema::table('lessons', function (Blueprint $table): void {
             $table->dropUnique(['module_id', 'slug']);
         });
@@ -68,4 +64,35 @@ return new class extends Migration
     }
 
     public function down(): void {}
+
+    /**
+     * Laravel assumes names like `courses_program_id_foreign`; MySQL may use a different name,
+     * or the FK may be missing (imported schema / partial migration). Resolve from information_schema.
+     */
+    private function dropForeignKeyIfExists(string $table, string $column): void
+    {
+        $connection = Schema::getConnection();
+        $driver = $connection->getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $database = $connection->getDatabaseName();
+            $row = DB::selectOne(
+                'SELECT CONSTRAINT_NAME AS name FROM information_schema.KEY_COLUMN_USAGE
+                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?
+                 AND REFERENCED_TABLE_NAME IS NOT NULL
+                 LIMIT 1',
+                [$database, $table, $column]
+            );
+
+            if ($row !== null && isset($row->name) && $row->name !== '') {
+                DB::statement('ALTER TABLE `'.$table.'` DROP FOREIGN KEY `'.$row->name.'`');
+            }
+
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($column): void {
+            $blueprint->dropForeign([$column]);
+        });
+    }
 };
