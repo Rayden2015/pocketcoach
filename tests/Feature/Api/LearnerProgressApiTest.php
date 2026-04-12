@@ -99,7 +99,7 @@ class LearnerProgressApiTest extends TestCase
 
         $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [])
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Provide notes, notes_is_public, position_seconds, and/or completed.');
+            ->assertJsonPath('message', 'Provide notes, notes_is_public, position_seconds, content_progress_percent, and/or completed.');
     }
 
     public function test_lesson_progress_accepts_root_lesson_without_module(): void
@@ -206,5 +206,37 @@ class LearnerProgressApiTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.notes_is_public', false);
+    }
+
+    public function test_lesson_progress_content_percent_is_high_water_and_returned_in_response(): void
+    {
+        $data = $this->publishedCourseWithLesson();
+        $user = User::factory()->create();
+        Enrollment::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $user->id,
+            'course_id' => $data['course']->id,
+            'source' => 'test',
+            'status' => 'active',
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'content_progress_percent' => 20,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.content_progress_percent', 20);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'content_progress_percent' => 55,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.content_progress_percent', 55);
+
+        $this->putJson("/api/v1/tenants/{$data['tenant']->slug}/lessons/{$data['lesson']->id}/progress", [
+            'content_progress_percent' => 30,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.content_progress_percent', 55);
     }
 }

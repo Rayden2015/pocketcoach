@@ -51,6 +51,7 @@ class ReflectionPromptPublishedNotification extends Notification implements Shou
         return [
             'title' => $this->prompt->title ?? 'New reflection prompt',
             'body' => str(strip_tags($this->prompt->body))->limit(200)->toString(),
+            'kind' => 'reflection_prompt',
             'reflection_prompt_id' => $this->prompt->id,
             'tenant_slug' => $tenant->slug,
             'url' => $url,

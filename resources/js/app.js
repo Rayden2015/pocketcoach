@@ -1,4 +1,5 @@
 import './bootstrap';
+import { initLearnLesson } from './learn-lesson';
 
 function initNotificationsBell() {
     const root = document.getElementById('pc-notifications-bell');
@@ -166,8 +167,53 @@ function initNotificationsBell() {
     setInterval(refreshUnread, 60000);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNotificationsBell);
-} else {
+function initBrowserNotifications() {
+    const bell = document.getElementById('pc-notifications-bell');
+    if (!bell || !window.axios || typeof Notification === 'undefined') {
+        return;
+    }
+    const unreadUrl = bell.dataset.unreadUrl;
+    if (!unreadUrl) {
+        return;
+    }
+    let lastCount = null;
+    async function poll() {
+        try {
+            const { data } = await window.axios.get(unreadUrl);
+            const n = typeof data?.count === 'number' ? data.count : 0;
+            if (lastCount !== null && n > lastCount && Notification.permission === 'granted') {
+                new Notification('Pocket Coach', {
+                    body: 'You have new notifications.',
+                    tag: 'pc-unread',
+                });
+            }
+            lastCount = n;
+        } catch {
+            /* ignore */
+        }
+    }
+    setInterval(poll, 60000);
+    poll();
+    const toggleBtn = bell.querySelector('[data-bell-toggle]');
+    toggleBtn?.addEventListener(
+        'click',
+        () => {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        },
+        { once: true },
+    );
+}
+
+function initAppScripts() {
     initNotificationsBell();
+    initLearnLesson();
+    initBrowserNotifications();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAppScripts);
+} else {
+    initAppScripts();
 }

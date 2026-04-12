@@ -102,16 +102,19 @@ class LessonProgressSnapshot {
     this.notes,
     this.notesIsPublic = false,
     this.positionSeconds,
+    this.contentProgressPercent,
   });
 
   factory LessonProgressSnapshot.fromJson(Map<String, dynamic> j) {
     final ps = j['position_seconds'];
+    final cpp = j['content_progress_percent'];
     final nip = j['notes_is_public'];
     return LessonProgressSnapshot(
       completedAt: j['completed_at'] as String?,
       notes: j['notes'] as String?,
       notesIsPublic: nip is bool ? nip : (nip == true),
       positionSeconds: ps is int ? ps : (ps is num ? ps.toInt() : null),
+      contentProgressPercent: cpp is int ? cpp : (cpp is num ? cpp.toInt() : null),
     );
   }
 
@@ -119,6 +122,7 @@ class LessonProgressSnapshot {
   final String? notes;
   final bool notesIsPublic;
   final int? positionSeconds;
+  final int? contentProgressPercent;
 
   bool get isComplete =>
       completedAt != null && completedAt!.isNotEmpty;

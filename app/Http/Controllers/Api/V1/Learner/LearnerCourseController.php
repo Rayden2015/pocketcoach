@@ -59,6 +59,7 @@ class LearnerCourseController extends Controller
                     'notes' => $pr->notes,
                     'notes_is_public' => $pr->notes_is_public,
                     'position_seconds' => $pr->position_seconds,
+                    'content_progress_percent' => $pr->content_progress_percent,
                 ],
             ];
         };

@@ -15,7 +15,7 @@ class EnsureTenantStaff
         $tenant = $request->route('tenant');
         $user = $request->user();
         if ($tenant === null || $user === null) {
-            return $request->expectsJson()
+            return $request->is('api/*')
                 ? response()->json(['message' => 'Unauthorized.'], 403)
                 : abort(403, 'Unauthorized');
         }
@@ -26,7 +26,7 @@ class EnsureTenantStaff
             ->first();
 
         if ($membership === null || ! in_array($membership->role, TenantRole::staffValues(), true)) {
-            return $request->expectsJson()
+            return $request->is('api/*')
                 ? response()->json(['message' => 'Forbidden.'], 403)
                 : abort(403, 'You do not have staff access for this space.');
         }

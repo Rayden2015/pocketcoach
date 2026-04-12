@@ -18,6 +18,7 @@ class LessonProgress extends Model
         'notes',
         'notes_is_public',
         'position_seconds',
+        'content_progress_percent',
     ];
 
     protected function casts(): array

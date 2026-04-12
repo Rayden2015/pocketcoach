@@ -150,6 +150,34 @@ class PocketCoachApi {
     }
   }
 
+  /// `GET /api/v1/me` — user attributes as JSON (snake_case keys).
+  Future<Map<String, dynamic>> fetchMe({
+    required String bearer,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/me'),
+      headers: _jsonHeaders(bearer),
+    );
+    return _decodeObject(res);
+  }
+
+  /// `PUT /api/v1/profile` — returns `{ data: user }`.
+  Future<Map<String, dynamic>> updateProfile({
+    required String bearer,
+    required Map<String, dynamic> fields,
+  }) async {
+    final body = Map<String, dynamic>.from(fields);
+    final res = await _client.put(
+      _u('/v1/profile'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(body),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+    return _decodeObject(res);
+  }
+
   Future<List<CatalogProgram>> fetchCatalog({
     required String bearer,
     required String tenantSlug,
@@ -359,6 +387,7 @@ class PocketCoachApi {
     required int lessonId,
     bool? completed,
     int? positionSeconds,
+    int? contentProgressPercent,
     String? notes,
     bool? notesIsPublic,
   }) async {
@@ -368,6 +397,9 @@ class PocketCoachApi {
     }
     if (positionSeconds != null) {
       payload['position_seconds'] = positionSeconds;
+    }
+    if (contentProgressPercent != null) {
+      payload['content_progress_percent'] = contentProgressPercent;
     }
     if (notes != null) {
       payload['notes'] = notes;

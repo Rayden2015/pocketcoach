@@ -10,10 +10,12 @@ use Monolog\Processor\PsrLogMessageProcessor;
 | Environment tag for log filenames (daily + emergency paths)
 |--------------------------------------------------------------------------
 | Daily files look like: laravel-local-2026-04-06.log, laravel-production-2026-04-06.log
+| API-only traffic (see UseApiLogChannel middleware): api-local-2026-04-06.log
 */
 $logEnvTag = preg_replace('/[^a-z0-9._-]+/i', '-', strtolower((string) env('APP_ENV', 'production')));
 $logEnvTag = $logEnvTag !== '' ? $logEnvTag : 'production';
 $dailyLogPath = storage_path('logs/laravel-'.$logEnvTag.'.log');
+$apiDailyLogPath = storage_path('logs/api-'.$logEnvTag.'.log');
 
 return [
 
@@ -45,6 +47,22 @@ return [
         'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
         'trace' => env('LOG_DEPRECATIONS_TRACE', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API HTTP request/response logging (LogApiHttp middleware)
+    |--------------------------------------------------------------------------
+    |
+    | When true, each /api/* request writes one "API HTTP" line to the api
+    | daily log (storage/logs/api-{APP_ENV}-YYYY-MM-DD.log). Set LOG_API_HTTP
+    | in .env, or leave unset to mirror APP_DEBUG for local troubleshooting.
+    |
+    */
+
+    'log_api_http' => filter_var(
+        env('LOG_API_HTTP', env('APP_DEBUG', false)),
+        FILTER_VALIDATE_BOOLEAN
+    ),
 
     /*
     |--------------------------------------------------------------------------
@@ -80,6 +98,18 @@ return [
             'path' => $dailyLogPath,
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        | Used as the default channel for routes under /api/* (middleware: UseApiLogChannel).
+        | Filenames: api-{APP_ENV}-YYYY-MM-DD.log
+        */
+        'api' => [
+            'driver' => 'daily',
+            'path' => $apiDailyLogPath,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_API_DAILY_DAYS', env('LOG_DAILY_DAYS', 14)),
             'replace_placeholders' => true,
         ],
 

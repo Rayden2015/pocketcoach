@@ -48,7 +48,8 @@
                             </svg>
                             <span class="pointer-events-none absolute -right-0.5 -top-0.5 hidden h-5 min-w-5 items-center justify-center rounded-full bg-[var(--pc-accent)] px-1 text-[10px] font-bold leading-none text-white shadow-sm" data-unread-badge></span>
                         </button>
-                        <div class="absolute right-0 z-[60] mt-2 hidden w-[min(22rem,calc(100vw-2rem))] origin-top-right rounded-2xl border border-slate-200/90 bg-white/95 py-2 shadow-xl backdrop-blur-sm" data-bell-panel hidden role="menu">
+                        {{-- Do not add Tailwind "hidden" here: it uses !important and blocks toggling via the HTML hidden attribute / JS. --}}
+                        <div class="absolute right-0 z-[60] mt-2 w-[min(22rem,calc(100vw-2rem))] origin-top-right rounded-2xl border border-slate-200/90 bg-white/95 py-2 shadow-xl backdrop-blur-sm" data-bell-panel hidden role="menu">
                             <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-3 pb-2">
                                 <p class="text-sm font-semibold text-slate-800">Notifications</p>
                                 <button type="button" class="text-xs font-semibold text-[var(--pc-accent)] hover:underline disabled:opacity-40" data-mark-all-read>Mark all as read</button>

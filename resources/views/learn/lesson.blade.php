@@ -2,7 +2,32 @@
 
 @section('title', $lesson->title.' — '.$course->title)
 
+@php
+    $initialProgressPercent = 0;
+    if ($progress?->completed_at) {
+        $initialProgressPercent = 100;
+    } elseif ($progress?->content_progress_percent !== null) {
+        $initialProgressPercent = min(100, (int) $progress->content_progress_percent);
+    }
+@endphp
+
 @section('content')
+    <div
+        class="fixed left-0 right-0 top-14 z-40 h-1.5 bg-stone-200/90 shadow-sm"
+        id="lesson-reading-progress"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="{{ $initialProgressPercent }}"
+        aria-label="Lesson progress"
+    >
+        <div
+            id="lesson-progress-fill"
+            class="h-full bg-teal-600 transition-[width] duration-200 ease-out"
+            style="width: {{ $initialProgressPercent }}%"
+        ></div>
+    </div>
+
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm">
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('learn.course', [$tenant, $course]) }}" class="font-medium text-teal-700 hover:underline">← Course overview</a>
@@ -14,13 +39,28 @@
                 <a href="{{ route('learn.lesson', [$tenant, $prevLesson]) }}" class="rounded-full border border-stone-300 bg-white px-3 py-1.5 text-stone-700 shadow-sm hover:border-stone-400">Previous</a>
             @endif
             @if ($nextLesson)
-                <a href="{{ route('learn.lesson', [$tenant, $nextLesson]) }}" class="rounded-full bg-stone-900 px-3 py-1.5 font-semibold text-white shadow-sm hover:bg-stone-800">Next lesson</a>
+                <button
+                    type="submit"
+                    name="intent"
+                    value="next"
+                    form="lesson-progress-form"
+                    class="rounded-full bg-stone-900 px-3 py-1.5 font-semibold text-white shadow-sm hover:bg-stone-800"
+                >
+                    Next lesson
+                </button>
             @endif
         </div>
     </div>
 
     <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
-        <div class="min-w-0">
+        <div
+            class="min-w-0"
+            data-learn-lesson
+            data-progress-url="{{ route('learn.lesson.progress', [$tenant, $lesson]) }}"
+            data-initial-percent="{{ $initialProgressPercent }}"
+            data-completed="{{ $progress && $progress->completed_at ? '1' : '0' }}"
+            data-lesson-type="{{ $lesson->lesson_type }}"
+        >
             <article class="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm">
                 <div class="border-b border-stone-100 bg-stone-50/80 px-5 py-3 sm:px-6">
                     <p class="text-xs font-semibold uppercase tracking-wide text-stone-500">{{ str_replace('_', ' ', $lesson->lesson_type) }}</p>
@@ -72,8 +112,10 @@
 
             <section class="mt-6 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 class="text-sm font-bold text-stone-900">Notes &amp; progress</h2>
-                <form method="POST" action="{{ route('learn.lesson.progress', [$tenant, $lesson]) }}" class="mt-4 space-y-4">
+                <form method="POST" action="{{ route('learn.lesson.progress', [$tenant, $lesson]) }}" id="lesson-progress-form" class="mt-4 space-y-4">
                     @csrf
+                    <input type="hidden" name="content_progress_percent" id="lesson-form-content-progress" value="{{ $initialProgressPercent }}">
+                    <input type="hidden" name="position_seconds" id="lesson-form-position-seconds" value="{{ (int) ($progress->position_seconds ?? 0) }}">
                     <div>
                         <label for="notes" class="block text-sm font-medium text-stone-700">Your notes</label>
                         <textarea id="notes" name="notes" rows="4"
@@ -84,12 +126,25 @@
                             @checked(old('notes_is_public', $progress->notes_is_public ?? false))>
                         <span><span class="font-medium">Share with other learners</span> — when checked, enrolled learners can read this note on this lesson page (not on other lessons).</span>
                     </label>
-                    <input type="hidden" name="mark_complete" value="0">
-                    <label class="flex items-center gap-2 text-sm text-stone-700">
-                        <input type="checkbox" name="mark_complete" value="1" @checked(old('mark_complete', $progress && $progress->completed_at ? '1' : '0') === '1')>
-                        Mark lesson complete
-                    </label>
-                    <button type="submit" class="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-700">Save</button>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button type="submit" name="intent" value="save_notes" class="rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 shadow-sm hover:bg-stone-50">
+                            Save notes
+                        </button>
+                        @if ($progress && $progress->completed_at)
+                            <button type="submit" name="intent" value="incomplete" class="rounded-full border border-amber-300 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100">
+                                Mark incomplete
+                            </button>
+                        @else
+                            <button type="submit" name="intent" value="complete" class="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-700">
+                                Mark complete
+                            </button>
+                        @endif
+                        @if ($nextLesson)
+                            <button type="submit" name="intent" value="next" class="rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-stone-800">
+                                Next lesson
+                            </button>
+                        @endif
+                    </div>
                 </form>
             </section>
 
@@ -132,6 +187,17 @@
                     'completedLessonIds' => $completedLessonIds,
                 ])
             </div>
+
+            <section class="mt-10 border-t border-stone-200 pt-6 text-sm text-stone-600">
+                <p class="font-medium text-stone-800">Done with this lesson?</p>
+                <p class="mt-2">
+                    <a href="{{ route('learn.course', [$tenant, $course]) }}" class="font-medium text-teal-700 hover:underline">Course overview</a>
+                    <span class="px-2 text-stone-300">·</span>
+                    <a href="{{ route('my-learning') }}" class="font-medium text-teal-700 hover:underline">My learning</a>
+                    <span class="px-2 text-stone-300">·</span>
+                    <a href="{{ route('learn.catalog', $tenant) }}" class="font-medium text-teal-700 hover:underline">Catalog</a>
+                </p>
+            </section>
         </div>
 
         <aside class="sticky top-20 mt-8 hidden lg:mt-0 lg:block">

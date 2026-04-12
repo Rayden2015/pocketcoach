@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\TaskBoardWebhookController;
 use App\Http\Controllers\Api\V1\TenantBrandingController;
 use App\Http\Controllers\Api\V1\TenantJoinController;
 use App\Http\Controllers\Api\V1\UserNotificationController;
+use App\Http\Controllers\Api\V1\UserProfileController;
 use App\Http\Controllers\Api\Webhooks\PaystackWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+        Route::put('/profile', [UserProfileController::class, 'update']);
         Route::get('/notifications', [UserNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
         Route::post('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead']);

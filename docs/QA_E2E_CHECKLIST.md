@@ -96,6 +96,7 @@ Structured test cases for QA engineers. Track pass/fail and attach screenshots o
 | LR6 | My learning | `GET /my-learning` | Lists enrolled courses and progress; empty state when none. |
 | LR7 | Search | `GET /search` **without** auth | Redirect/login required. |
 | LR8 | Search isolation | Search as user in Space A | Results **do not** include Space B courses. |
+| LR9 | Lesson progress (web) — intents & AJAX | Enrolled learner: post `/{slug}/learn/lessons/{lesson}/progress` with `intent` save_notes, complete, next, incomplete; optional AJAX ping (`X-Requested-With`) with `content_progress_percent` / `position_seconds` without `intent` | save_notes does not set completed; complete/next set completion and percent; next redirects to following lesson; incomplete clears completed_at; AJAX merges high-water percent; non-enrolled **403**. Automated: `LearnLessonProgressWebTest`. |
 
 ---
 
@@ -124,7 +125,10 @@ Use **Sanctum**: `POST /api/v1/register` or `login` → `Authorization: Bearer {
 | API6 | Learning summary | `GET .../learning-summary` | Counts / stats match completed lessons. |
 | API7 | Continue | `GET .../continue` | Nullable / next lesson per enrollment state. |
 | API8 | Free enroll | `POST .../enrollments/free` | Creates enrollment; idempotent; wrong tenant **404**; one-time product rejected. |
-| API9 | Branding | `GET /api/v1/tenants/{tenant}/branding` | Public branding payload. |
+| API9 | Branding | `GET /api/v1/tenants/{tenant}/branding` | Public JSON (`name`, `slug`, `branding`, `settings`); **404** when tenant not active (e.g. suspended). `TenantBrandingApiTest`. |
+| API10 | Reflection prompts | `GET .../reflection-prompts/latest`, `GET .../reflection-prompts/{id}`, `POST .../view`, `PUT .../response` (Sanctum) | Latest null or newest published; show includes `my_response` when set; upsert creates/updates one response; **404** when reflections disabled in tenant settings. `LearnerReflectionApiTest`. |
+| API11 | Profile validation | `PUT /api/v1/profile` | Invalid `timezone` or `locale` → **422** with validation errors. `UserProfileApiTest`. |
+| API12 | Progress `content_progress_percent` | `PUT .../lessons/{lesson}/progress` with percent only | Percent is **high-water** (e.g. 20 → 55 → 30 stays **55**); value returned on success. `LearnerProgressApiTest`. |
 
 ---
 
@@ -151,4 +155,4 @@ Use **Sanctum**: `POST /api/v1/register` or `login` → `Authorization: Bearer {
 - **Trace matrix:** map each **ID** above to a requirement or user story.
 - **Data sheet:** fixed emails, slugs, and which courses are free vs paid for repeatable runs.
 - **API collection:** see `docs/postman/Pocket_Coach_API.postman_collection.json`; use env vars `base_url`, `token`, `tenant_id`, `course_id`, `lesson_id`.
-- **Automation (Trello / CI):** see `docs/TASK_BOARD.md` — HTTP endpoint and Artisan command to open QA tasks when features ship.
+- **Automation (Trello / CI):** see `docs/TASK_BOARD.md` — HTTP endpoint and Artisan command to open QA tasks when features ship. After adding rows here, push **new** case ids only: `php artisan task-board:import-qa-checklist --ids=LR9,API10,API11,API12 --force` (dedupe skips ids already on the list).

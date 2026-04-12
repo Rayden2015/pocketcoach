@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/providers/engagement_providers.dart';
 import 'package:pocket_coach_mobile/screens/catalog_screen.dart';
-import 'package:pocket_coach_mobile/screens/continue_screen.dart';
-import 'package:pocket_coach_mobile/screens/progress_screen.dart';
+import 'package:pocket_coach_mobile/screens/learning_home_screen.dart';
+import 'package:pocket_coach_mobile/screens/profile_screen.dart';
 
 class MainTabsScreen extends ConsumerStatefulWidget {
   const MainTabsScreen({super.key});
@@ -25,8 +25,8 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
         index: _index,
         children: const [
           CatalogScreen(),
-          ContinueScreen(),
-          ProgressScreen(),
+          LearningHomeScreen(),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -39,14 +39,14 @@ class _MainTabsScreenState extends ConsumerState<MainTabsScreen> {
             label: 'Catalog',
           ),
           NavigationDestination(
-            icon: Icon(Icons.play_circle_outline),
-            selectedIcon: Icon(Icons.play_circle),
-            label: 'Continue',
+            icon: Icon(Icons.school_outlined),
+            selectedIcon: Icon(Icons.school),
+            label: 'Learning',
           ),
           NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights),
-            label: 'Progress',
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
