@@ -72,12 +72,8 @@
                                 @endif
                             </div>
                             @auth
-                                <form method="POST" action="{{ route('public.catalog.track', $tenant) }}" class="shrink-0">
-                                    @csrf
-                                    <input type="hidden" name="course_id" value="{{ $course->id }}">
-                                    <input type="hidden" name="redirect_to" value="{{ \Illuminate\Support\Facades\URL::route('learn.course', [$tenant, $course], false) }}">
-                                    <button type="submit" class="text-sm font-medium text-teal-700 hover:underline">Open course</button>
-                                </form>
+                                <a href="{{ route('public.catalog.track', $tenant) }}?{{ http_build_query(['course_id' => $course->id, 'redirect_to' => \Illuminate\Support\Facades\URL::route('learn.course', [$tenant, $course], false)]) }}"
+                                    class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Open course</a>
                             @else
                                 <a href="{{ route('space.login', $tenant) }}" class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Log in to enroll</a>
                             @endauth
@@ -109,12 +105,8 @@
                                 @endif
                             </div>
                             @auth
-                                <form method="POST" action="{{ route('public.catalog.track', $tenant) }}" class="shrink-0">
-                                    @csrf
-                                    <input type="hidden" name="course_id" value="{{ $course->id }}">
-                                    <input type="hidden" name="redirect_to" value="{{ \Illuminate\Support\Facades\URL::route('learn.course', [$tenant, $course], false) }}">
-                                    <button type="submit" class="text-sm font-medium text-teal-700 hover:underline">Open course</button>
-                                </form>
+                                <a href="{{ route('public.catalog.track', $tenant) }}?{{ http_build_query(['course_id' => $course->id, 'redirect_to' => \Illuminate\Support\Facades\URL::route('learn.course', [$tenant, $course], false)]) }}"
+                                    class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Open course</a>
                             @else
                                 <a href="{{ route('space.login', $tenant) }}" class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Log in to enroll</a>
                             @endauth

@@ -7,6 +7,7 @@ import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
+import 'package:pocket_coach_mobile/router/app_paths.dart';
 
 class CourseScreen extends ConsumerStatefulWidget {
   const CourseScreen({super.key, required this.courseId});
@@ -64,7 +65,25 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              AppPaths.goHome(context);
+            }
+          },
+        ),
         title: async.maybeWhen(data: (c) => Text(c.title), orElse: () => const Text('Course')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: 'Home',
+            onPressed: () => AppPaths.goHome(context),
+          ),
+        ],
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -172,7 +191,7 @@ class _ModuleSection extends StatelessWidget {
                   ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
                   : Icon(Icons.radio_button_unchecked, color: Theme.of(context).colorScheme.outline),
               trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
-              onTap: () => context.push('/course/$courseId/lesson/${lesson.id}'),
+              onTap: () => context.push('lesson/${lesson.id}'),
             ),
         ],
       ),

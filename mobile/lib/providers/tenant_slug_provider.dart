@@ -29,4 +29,28 @@ class TenantSlugNotifier extends Notifier<String> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kTenantSlug, v);
   }
+
+  /// If the saved slug is not in [memberships], switch to the first space (web parity with enrolled tenants).
+  Future<void> alignWithMemberships(List<Map<String, dynamic>> memberships) async {
+    if (memberships.isEmpty) {
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_kTenantSlug)?.trim() ?? '';
+    final slugs = memberships
+        .map((m) => m['tenant_slug'] as String?)
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (slugs.isEmpty) {
+      return;
+    }
+    if (saved.isNotEmpty && slugs.contains(saved)) {
+      if (state != saved) {
+        state = saved;
+      }
+      return;
+    }
+    await setSlug(slugs.first);
+  }
 }

@@ -106,12 +106,22 @@
                             </div>
                         </div>
                         <div class="flex shrink-0 flex-wrap gap-2">
+                            <a href="{{ route('learn.dashboard', $tenant) }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
+                                Space home
+                            </a>
                             <a href="{{ route('profile') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
                                 Profile
                             </a>
-                            <a href="{{ route('my-coaching') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
-                                My coaching
-                            </a>
+                            @if ($tenantMembership && in_array($tenantMembership->role, \App\Enums\TenantRole::staffValues(), true))
+                                <a href="{{ route('coach.home', $tenant) }}" class="inline-flex items-center justify-center rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm transition hover:bg-amber-100">
+                                    Coach console
+                                </a>
+                            @endif
+                            @if (auth()->user()->coachesAnySpace())
+                                <a href="{{ route('my-coaching') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
+                                    My coaching
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

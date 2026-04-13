@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\TenantRole;
 use App\Http\Controllers\Controller;
+use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\Auth\GoogleAccountService;
 use App\Services\Auth\GoogleIdTokenVerifier;
@@ -64,7 +66,7 @@ class AuthController extends Controller
         GoogleAccountService $linker,
         GoogleIdTokenVerifier $verifier,
     ): JsonResponse {
-        if ((string) config('services.google.client_id') === '') {
+        if (blank(config('services.google.client_id'))) {
             return response()->json(['message' => 'Google sign-in is not configured.'], 503);
         }
 
@@ -111,6 +113,23 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        $memberships = TenantMembership::query()
+            ->where('user_id', $user->id)
+            ->with('tenant:id,slug,name')
+            ->get()
+            ->map(fn (TenantMembership $m) => [
+                'tenant_id' => $m->tenant_id,
+                'tenant_slug' => $m->tenant?->slug,
+                'tenant_name' => $m->tenant?->name,
+                'role' => $m->role,
+                'is_staff' => in_array($m->role, TenantRole::staffValues(), true),
+            ])
+            ->values()
+            ->all();
+
+        return response()->json(array_merge($user->toArray(), [
+            'memberships' => $memberships,
+        ]));
     }
 }

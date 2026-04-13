@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Api\V1\Admin\ModuleController as AdminModuleController;
 use App\Http\Controllers\Api\V1\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CourseSearchController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\Learner\CatalogController;
 use App\Http\Controllers\Api\V1\Learner\ContinueLearningController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\V1\Learner\PeerContentController;
 use App\Http\Controllers\Api\V1\Learner\SubmissionConversationController as ApiSubmissionConversationController;
 use App\Http\Controllers\Api\V1\PaystackPaymentController;
 use App\Http\Controllers\Api\V1\TaskBoardWebhookController;
+use App\Http\Controllers\Api\V1\Tenant\HomeDashboardController;
 use App\Http\Controllers\Api\V1\TenantBrandingController;
 use App\Http\Controllers\Api\V1\TenantJoinController;
 use App\Http\Controllers\Api\V1\UserNotificationController;
@@ -45,7 +47,10 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead']);
         Route::patch('/notifications/{id}', [UserNotificationController::class, 'markAsRead']);
 
+        Route::get('/search/courses', [CourseSearchController::class, 'index']);
+
         Route::get('/tenants/{tenant}/catalog', [CatalogController::class, 'index']);
+        Route::get('/tenants/{tenant}/home-dashboard', [HomeDashboardController::class, 'show']);
         Route::get('/tenants/{tenant}/continue', [ContinueLearningController::class, 'show']);
         Route::get('/tenants/{tenant}/learning-summary', [LearningSummaryController::class, 'index']);
         Route::post('/tenants/{tenant}/join', [TenantJoinController::class, 'store']);

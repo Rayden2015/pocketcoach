@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LearnCatalogController;
 use App\Http\Controllers\Web\LearnContinueController;
 use App\Http\Controllers\Web\LearnCourseController;
+use App\Http\Controllers\Web\LearnDashboardController;
 use App\Http\Controllers\Web\LearnEnrollmentController;
 use App\Http\Controllers\Web\LearnLessonController;
 use App\Http\Controllers\Web\LearnLessonProgressController;
@@ -82,7 +83,13 @@ Route::middleware('auth')->group(function (): void {
 | Reserved slugs: config/tenancy.reserved_slugs
 */
 Route::prefix('{tenant:slug}')->group(function (): void {
-    Route::get('/', fn (Tenant $tenant) => redirect()->route('public.catalog', $tenant))->name('space.welcome');
+    Route::get('/', function (Tenant $tenant) {
+        if (auth()->check()) {
+            return redirect()->route('learn.dashboard', $tenant);
+        }
+
+        return redirect()->route('public.catalog', $tenant);
+    })->name('space.welcome');
 
     Route::get('/catalog', [PublicCatalogController::class, 'show'])->name('public.catalog');
 
@@ -95,10 +102,11 @@ Route::prefix('{tenant:slug}')->group(function (): void {
 
     Route::middleware('auth')->group(function (): void {
         Route::post('/join', [LearnSpaceJoinController::class, 'store'])->name('space.join');
-        Route::post('/catalog/track', [PublicCatalogTrackController::class, 'store'])->name('public.catalog.track');
+        Route::match(['get', 'post'], '/catalog/track', [PublicCatalogTrackController::class, 'track'])->name('public.catalog.track');
 
         Route::prefix('learn')->name('learn.')->group(function (): void {
-            Route::get('/', fn (Tenant $tenant) => redirect()->route('learn.catalog', $tenant))->name('home');
+            Route::get('/', fn (Tenant $tenant) => redirect()->route('learn.dashboard', $tenant))->name('home');
+            Route::get('/dashboard', [LearnDashboardController::class, 'show'])->name('dashboard');
             Route::get('/catalog', [LearnCatalogController::class, 'index'])->name('catalog');
             Route::get('/continue', [LearnContinueController::class, 'show'])->name('continue');
             Route::post('/courses/{course}/enroll', [LearnEnrollmentController::class, 'store'])->name('course.enroll');
@@ -152,8 +160,7 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::get('reflections/submissions', function (Tenant $tenant) {
                 return redirect()->route('coach.learner-submissions.index', ['tenant' => $tenant, 'tab' => 'reflections']);
             })->name('reflections.submissions.index');
-            Route::resource('reflections', CoachReflectionPromptController::class)
-                ->parameters(['reflection' => 'reflection_prompt']);
+            Route::resource('reflections', CoachReflectionPromptController::class);
         });
     });
 });

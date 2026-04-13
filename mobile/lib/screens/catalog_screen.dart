@@ -6,7 +6,10 @@ import 'package:pocket_coach_mobile/models/catalog_models.dart';
 import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
+import 'package:pocket_coach_mobile/providers/user_provider.dart';
+import 'package:pocket_coach_mobile/providers/membership_providers.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
+import 'package:pocket_coach_mobile/widgets/space_switcher.dart';
 
 Future<void> _joinSpace(BuildContext context, WidgetRef ref) async {
   final token = ref.read(sessionProvider).valueOrNull;
@@ -16,6 +19,8 @@ Future<void> _joinSpace(BuildContext context, WidgetRef ref) async {
   final slug = ref.read(tenantSlugProvider);
   try {
     await ref.read(apiProvider).joinTenant(bearer: token, tenantSlug: slug);
+    ref.invalidate(currentUserProvider);
+    invalidateTenantScopedProviders(ref);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You joined this space')),
@@ -50,15 +55,13 @@ Future<void> _enrollAndOpenCourse(
           tenantSlug: slug,
           productId: pid,
         );
-    ref.invalidate(catalogProvider);
-    ref.invalidate(learningSummaryProvider);
-    ref.invalidate(continueLearningProvider);
+    invalidateTenantScopedProviders(ref);
     ref.invalidate(courseDetailProvider(course.id));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You are enrolled')),
       );
-      context.push('/course/${course.id}');
+      context.push('course/${course.id}');
     }
   } on ApiException catch (e) {
     if (context.mounted) {
@@ -72,60 +75,24 @@ Future<void> _enrollAndOpenCourse(
 class CatalogScreen extends ConsumerWidget {
   const CatalogScreen({super.key});
 
-  Future<void> _editSlug(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController(text: ref.read(tenantSlugProvider));
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (c) {
-        return AlertDialog(
-          title: const Text('Space slug'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'e.g. adeola',
-              border: OutlineInputBorder(),
-            ),
-            autofocus: true,
-            textInputAction: TextInputAction.done,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (ok == true && context.mounted) {
-      await ref.read(tenantSlugProvider.notifier).setSlug(controller.text);
-      ref.invalidate(catalogProvider);
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final slug = ref.watch(tenantSlugProvider);
+    ref.watch(membershipSlugAlignmentProvider);
     final catalog = ref.watch(catalogProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catalog'),
+        title: const SpaceSwitcherButton(),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search courses',
+            onPressed: () => context.push('/search'),
+          ),
           IconButton(
             icon: const Icon(Icons.groups_2_outlined),
             tooltip: 'Join this space',
             onPressed: () => _joinSpace(context, ref),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_location_alt_outlined),
-            tooltip: 'Change space',
-            onPressed: () => _editSlug(context, ref),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -137,15 +104,6 @@ class CatalogScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Text(
-              'Space: $slug',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -253,7 +211,7 @@ class CatalogScreen extends ConsumerWidget {
                                   ),
                                   onTap: () async {
                                     if (course.isEnrolled) {
-                                      context.push('/course/${course.id}');
+                                      context.push('course/${course.id}');
                                       return;
                                     }
                                     if (course.canEnrollFree) {
@@ -261,7 +219,7 @@ class CatalogScreen extends ConsumerWidget {
                                       return;
                                     }
                                     if (context.mounted) {
-                                      context.push('/course/${course.id}');
+                                      context.push('course/${course.id}');
                                     }
                                   },
                                 ),

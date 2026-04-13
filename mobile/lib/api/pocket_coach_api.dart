@@ -6,6 +6,8 @@ import 'package:pocket_coach_mobile/models/catalog_models.dart';
 import 'package:pocket_coach_mobile/models/continue_learning.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
 import 'package:pocket_coach_mobile/models/engagement_models.dart';
+import 'package:pocket_coach_mobile/models/home_dashboard.dart';
+import 'package:pocket_coach_mobile/models/search_course_hit.dart';
 import 'package:pocket_coach_mobile/models/learning_summary.dart';
 
 class ApiException implements Exception {
@@ -122,6 +124,18 @@ class PocketCoachApi {
     }
   }
 
+  Future<HomeDashboardPayload> fetchHomeDashboard({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/home-dashboard'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    return HomeDashboardPayload.fromApi(map);
+  }
+
   Future<List<LearningCourseSummary>> fetchLearningSummary({
     required String bearer,
     required String tenantSlug,
@@ -151,6 +165,26 @@ class PocketCoachApi {
   }
 
   /// `GET /api/v1/me` — user attributes as JSON (snake_case keys).
+  /// Same scope as web course search: enrolled + member tenants, min 2 chars.
+  Future<List<SearchCourseHit>> searchCourses({
+    required String bearer,
+    required String query,
+  }) async {
+    final q = query.trim();
+    final res = await _client.get(
+      _u('/v1/search/courses?q=${Uri.encodeQueryComponent(q)}'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => SearchCourseHit.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<Map<String, dynamic>> fetchMe({
     required String bearer,
   }) async {

@@ -11,6 +11,7 @@ import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
+import 'package:pocket_coach_mobile/router/app_paths.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
@@ -38,10 +39,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   int _lastSentPercent = 0;
 
   void _switchLesson(int lessonId) {
-    if (context.canPop()) {
-      context.pop();
-    }
-    context.push('/course/${widget.courseId}/lesson/$lessonId');
+    context.go(
+      AppPaths.courseLessonInCurrentBranch(context, widget.courseId, lessonId),
+    );
   }
 
   @override
@@ -232,6 +232,17 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              AppPaths.goToCourseOverview(context, widget.courseId);
+            }
+          },
+        ),
         title: async.maybeWhen(
           data: (c) {
             final lesson = c.findLesson(widget.lessonId);
@@ -243,12 +254,12 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           IconButton(
             icon: const Icon(Icons.home_outlined),
             tooltip: 'Home',
-            onPressed: () => context.go('/home'),
+            onPressed: () => AppPaths.goHome(context),
           ),
           IconButton(
             icon: const Icon(Icons.menu_book_outlined),
             tooltip: 'Course overview',
-            onPressed: () => context.go('/course/${widget.courseId}'),
+            onPressed: () => AppPaths.goToCourseOverview(context, widget.courseId),
           ),
         ],
         bottom: PreferredSize(
@@ -407,12 +418,14 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 runSpacing: 8,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _saving ? null : () => context.go('/course/${widget.courseId}'),
+                    onPressed: _saving
+                        ? null
+                        : () => AppPaths.goToCourseOverview(context, widget.courseId),
                     icon: const Icon(Icons.menu_book_outlined),
                     label: const Text('Course overview'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: _saving ? null : () => context.go('/home'),
+                    onPressed: _saving ? null : () => AppPaths.goHome(context),
                     icon: const Icon(Icons.home_outlined),
                     label: const Text('Home'),
                   ),

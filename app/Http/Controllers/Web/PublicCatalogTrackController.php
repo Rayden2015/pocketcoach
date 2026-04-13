@@ -11,8 +11,16 @@ use Illuminate\Http\Request;
 
 class PublicCatalogTrackController extends Controller
 {
-    public function store(Request $request, Tenant $tenant): RedirectResponse
+    /**
+     * GET and POST: count catalog open (when enabled), then redirect to the course or login.
+     * GET avoids 404 when users open /{tenant}/catalog/track in a new tab or share the URL.
+     */
+    public function track(Request $request, Tenant $tenant): RedirectResponse
     {
+        if (! $request->filled('course_id')) {
+            return redirect()->route('public.catalog', $tenant);
+        }
+
         $validated = $request->validate([
             'course_id' => ['required', 'integer', 'exists:courses,id'],
             'redirect_to' => ['nullable', 'string', 'max:2048'],

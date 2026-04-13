@@ -15,7 +15,7 @@ class GoogleAuthController extends Controller
 {
     public function redirect(): RedirectResponse
     {
-        if ((string) config('services.google.client_id') === '') {
+        if (blank(config('services.google.client_id'))) {
             abort(404);
         }
 
@@ -29,7 +29,7 @@ class GoogleAuthController extends Controller
 
     public function callback(GoogleAccountService $linker): RedirectResponse
     {
-        if ((string) config('services.google.client_id') === '') {
+        if (blank(config('services.google.client_id'))) {
             abort(404);
         }
 

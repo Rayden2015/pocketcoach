@@ -46,6 +46,33 @@ class ReflectionScheduleTest extends TestCase
         $this->assertTrue($prompt->scheduled_publish_at->copy()->timezone(config('app.timezone'))->format('H:i') === '07:00');
     }
 
+    public function test_coach_reflection_edit_resolves_route_model_binding(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 'adeola', 'status' => Tenant::STATUS_ACTIVE]);
+        $coach = User::factory()->create();
+        TenantMembership::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $coach->id,
+            'role' => 'owner',
+        ]);
+
+        $prompt = ReflectionPrompt::query()->create([
+            'tenant_id' => $tenant->id,
+            'author_id' => $coach->id,
+            'title' => 'Morning check-in',
+            'body' => 'What is one priority today?',
+            'is_published' => true,
+            'published_at' => now(),
+            'scheduled_publish_at' => null,
+        ]);
+
+        $this->actingAs($coach)
+            ->get(route('coach.reflections.edit', [$tenant, $prompt]))
+            ->assertOk()
+            ->assertSee('Morning check-in', false)
+            ->assertSee('← Reflections', false);
+    }
+
     public function test_publish_due_command_publishes_scheduled_prompt(): void
     {
         Notification::fake();

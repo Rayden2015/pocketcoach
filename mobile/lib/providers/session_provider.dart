@@ -78,4 +78,10 @@ class SessionNotifier extends AsyncNotifier<String?> {
     await _store.clear();
     state = const AsyncData(null);
   }
+
+  /// Drop the token without calling the API (e.g. after 401 Unauthenticated).
+  Future<void> clearSessionLocally() async {
+    await _store.clear();
+    state = const AsyncData(null);
+  }
 }

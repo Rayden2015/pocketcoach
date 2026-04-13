@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\Program;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -148,5 +149,44 @@ class PublicCatalogTest extends TestCase
             ->assertOk()
             ->assertSee('Outer', false)
             ->assertDontSee('Hidden inner', false);
+    }
+
+    public function test_catalog_track_get_without_params_redirects_to_public_catalog(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->get("/{$tenant->slug}/catalog/track")
+            ->assertRedirect(route('public.catalog', $tenant));
+    }
+
+    public function test_catalog_track_get_with_course_redirects_to_learn_course(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't']);
+        $program = Program::query()->create([
+            'tenant_id' => $tenant->id,
+            'title' => 'P',
+            'slug' => 'p',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $course = Course::query()->create([
+            'tenant_id' => $tenant->id,
+            'program_id' => $program->id,
+            'title' => 'C',
+            'slug' => 'c',
+            'sort_order' => 1,
+            'is_published' => true,
+        ]);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $learnPath = route('learn.course', [$tenant, $course], false);
+        $this->get("/{$tenant->slug}/catalog/track?".http_build_query([
+            'course_id' => $course->id,
+            'redirect_to' => $learnPath,
+        ]))
+            ->assertRedirect($learnPath);
     }
 }

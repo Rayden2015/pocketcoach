@@ -41,6 +41,8 @@ Use the **Web application** OAuth client ID from Google Cloud (the same value as
 
 After `flutter create`, configure the native Google Sign-In setup (iOS `REVERSED_CLIENT_ID` in Info.plist, Android `default_web_client_id` in strings if needed — follow [google_sign_in](https://pub.dev/packages/google_sign_in) docs).
 
+The UI shows the Google button when `GOOGLE_SERVER_CLIENT_ID` is non-empty at build time (`ApiConfig` / `googleSignInEnabledProvider`). For **widget tests**, override `googleSignInEnabledProvider` in `ProviderScope` so `flutter test` does not need that define; see `test/login_screen_test.dart` and `test/register_screen_test.dart`.
+
 Ensure the Laravel app accepts requests from the device (firewall, `php artisan serve --host=0.0.0.0` if needed).
 
 **Android (HTTP to your machine):** After `flutter create`, allow cleartext for local dev by adding `android:usesCleartextTraffic="true"` on the `<application>` element in `android/app/src/main/AndroidManifest.xml`. Use HTTPS in production.
@@ -60,7 +62,7 @@ Log in with a valid user. Set the **space slug** (tenant slug, same as web `/spa
 | Tech | Role |
 |------|------|
 | **flutter_riverpod** | Session, tenant slug, catalog/course/continue providers |
-| **go_router** | `/splash`, `/login`, `/home` (tabs), `/course/:id`, nested `/lesson/:id` |
+| **go_router** | `/splash`, `/login`; shell: `/catalog`, `/learning`, `/profile` + nested course/lesson, notifications, reflection |
 | **flutter_markdown** | Lesson body |
 | **url_launcher** | Opens `media_url` in the browser |
 

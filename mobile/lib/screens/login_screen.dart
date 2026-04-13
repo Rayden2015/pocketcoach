@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:pocket_coach_mobile/auth/google_sign_in_helper.dart';
 import 'package:pocket_coach_mobile/config/api_config.dart';
+import 'package:pocket_coach_mobile/providers/app_features_provider.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -24,42 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _google() async {
-    if (ApiConfig.googleServerClientId.isEmpty) {
-      return;
-    }
-    FocusScope.of(context).unfocus();
-    final google = GoogleSignIn(
-      serverClientId: ApiConfig.googleServerClientId,
-    );
-    try {
-      final account = await google.signIn();
-      if (account == null || !mounted) {
-        return;
-      }
-      final auth = await account.authentication;
-      final id = auth.idToken;
-      if (id == null || id.isEmpty) {
-        throw StateError('Google did not return an ID token. Check serverClientId matches Web OAuth client.');
-      }
-      await ref.read(sessionProvider.notifier).loginWithGoogleIdToken(id);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google sign-in failed: $e')),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) {
-      return;
-    }
-    final s = ref.read(sessionProvider);
-    if (s.hasError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign in failed: ${s.error}')),
-      );
-    }
+    await signInWithGoogle(ref, context);
   }
 
   Future<void> _submit() async {
@@ -85,6 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final busy = session.isLoading;
+    final googleOn = ref.watch(googleSignInEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pocket Coach')),
@@ -98,7 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
           ),
           const SizedBox(height: 24),
-          if (ApiConfig.googleServerClientId.isNotEmpty) ...[
+          if (googleOn) ...[
             OutlinedButton.icon(
               onPressed: busy ? null : _google,
               icon: const Icon(Icons.login),

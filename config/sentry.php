@@ -5,10 +5,18 @@
  *
  * @see https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/
  */
+$sentryDsn = env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN'));
+$sentrySend = ($sentryDsn !== null && $sentryDsn !== '')
+    && (
+        env('APP_ENV') === 'production'
+        || filter_var(env('SENTRY_ALLOW_NON_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN)
+    );
+
 return [
 
     // @see https://docs.sentry.io/concepts/key-terms/dsn-explainer/
-    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
+    // Only production by default; set SENTRY_ALLOW_NON_PRODUCTION=true to use DSN on staging/local.
+    'dsn' => $sentrySend ? $sentryDsn : null,
 
     // @see https://spotlightjs.com/
     // 'spotlight' => env('SENTRY_SPOTLIGHT', false),

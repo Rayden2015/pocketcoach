@@ -75,34 +75,34 @@ class ReflectionPromptController extends Controller
             ->with('status', $status);
     }
 
-    public function edit(Tenant $tenant, ReflectionPrompt $reflection_prompt): View
+    public function edit(Tenant $tenant, ReflectionPrompt $reflection): View
     {
-        abort_unless($reflection_prompt->tenant_id === $tenant->id, 404);
+        abort_unless($reflection->tenant_id === $tenant->id, 404);
 
         $tz = config('app.timezone');
         $defaultScheduleDate = old(
             'scheduled_date',
-            $reflection_prompt->scheduled_publish_at?->copy()->timezone($tz)->format('Y-m-d')
+            $reflection->scheduled_publish_at?->copy()->timezone($tz)->format('Y-m-d')
                 ?? Carbon::now($tz)->setTime(7, 0, 0)->addDay()->format('Y-m-d'),
         );
         $defaultScheduleTime = old(
             'scheduled_time',
-            $reflection_prompt->scheduled_publish_at?->copy()->timezone($tz)->format('H:i') ?? '07:00',
+            $reflection->scheduled_publish_at?->copy()->timezone($tz)->format('H:i') ?? '07:00',
         );
 
         return view('coach.reflections.edit', [
             'tenant' => $tenant,
-            'prompt' => $reflection_prompt,
+            'prompt' => $reflection,
             'defaultScheduleDate' => $defaultScheduleDate,
             'defaultScheduleTime' => $defaultScheduleTime,
         ]);
     }
 
-    public function update(Request $request, Tenant $tenant, ReflectionPrompt $reflection_prompt): RedirectResponse
+    public function update(Request $request, Tenant $tenant, ReflectionPrompt $reflection): RedirectResponse
     {
-        abort_unless($reflection_prompt->tenant_id === $tenant->id, 404);
+        abort_unless($reflection->tenant_id === $tenant->id, 404);
 
-        if ($reflection_prompt->is_published) {
+        if ($reflection->is_published) {
             $validated = $request->validate([
                 'title' => ['nullable', 'string', 'max:255'],
                 'body' => ['required', 'string', 'max:65535'],
@@ -110,16 +110,16 @@ class ReflectionPromptController extends Controller
             ]);
 
             $publish = $request->boolean('is_published');
-            $reflection_prompt->fill([
+            $reflection->fill([
                 'title' => $validated['title'] ?? null,
                 'body' => $validated['body'],
                 'is_published' => $publish,
                 'published_at' => $publish
-                    ? ($reflection_prompt->published_at ?? now())
+                    ? ($reflection->published_at ?? now())
                     : null,
-                'scheduled_publish_at' => $publish ? $reflection_prompt->scheduled_publish_at : null,
+                'scheduled_publish_at' => $publish ? $reflection->scheduled_publish_at : null,
             ]);
-            $reflection_prompt->save();
+            $reflection->save();
 
             return redirect()
                 ->route('coach.reflections.index', $tenant)
@@ -135,12 +135,12 @@ class ReflectionPromptController extends Controller
         ]);
 
         $publishAttrs = $this->publishAttributesFromTiming($request, $validated['publish_timing']);
-        $reflection_prompt->fill([
+        $reflection->fill([
             'title' => $validated['title'] ?? null,
             'body' => $validated['body'],
             ...$publishAttrs,
         ]);
-        $reflection_prompt->save();
+        $reflection->save();
 
         $status = 'Reflection prompt updated.';
         if (! $publishAttrs['is_published'] && $publishAttrs['scheduled_publish_at'] !== null) {
@@ -154,10 +154,10 @@ class ReflectionPromptController extends Controller
             ->with('status', $status);
     }
 
-    public function destroy(Tenant $tenant, ReflectionPrompt $reflection_prompt): RedirectResponse
+    public function destroy(Tenant $tenant, ReflectionPrompt $reflection): RedirectResponse
     {
-        abort_unless($reflection_prompt->tenant_id === $tenant->id, 404);
-        $reflection_prompt->delete();
+        abort_unless($reflection->tenant_id === $tenant->id, 404);
+        $reflection->delete();
 
         return redirect()
             ->route('coach.reflections.index', $tenant)

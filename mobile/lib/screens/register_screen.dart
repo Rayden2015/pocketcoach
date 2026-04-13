@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocket_coach_mobile/auth/google_sign_in_helper.dart';
 import 'package:pocket_coach_mobile/config/api_config.dart';
+import 'package:pocket_coach_mobile/providers/app_features_provider.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _password.dispose();
     _password2.dispose();
     super.dispose();
+  }
+
+  Future<void> _google() async {
+    await signInWithGoogle(ref, context);
   }
 
   Future<void> _submit() async {
@@ -57,6 +63,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final busy = session.isLoading;
+    final googleOn = ref.watch(googleSignInEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create account')),
@@ -70,6 +77,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
           ),
           const SizedBox(height: 24),
+          if (googleOn) ...[
+            OutlinedButton.icon(
+              onPressed: busy ? null : _google,
+              icon: const Icon(Icons.login),
+              label: const Text('Sign up with Google'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'or register with email',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _name,
             enabled: !busy,
