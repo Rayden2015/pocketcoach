@@ -7,11 +7,16 @@ use App\Models\Course;
 use App\Models\Program;
 use App\Models\ReflectionPrompt;
 use App\Models\Tenant;
+use App\Services\Booking\BookingSlotService;
 use App\Services\TenantEngagementSettings;
 use Illuminate\View\View;
 
 class PublicCatalogController extends Controller
 {
+    public function __construct(
+        private BookingSlotService $bookingSlots,
+    ) {}
+
     public function show(Tenant $tenant): View
     {
         $catalogSettings = TenantEngagementSettings::catalog($tenant);
@@ -66,6 +71,7 @@ class PublicCatalogController extends Controller
             'trackCatalogViews' => $catalogSettings['track_catalog_views'],
             'reflectionsEnabled' => $reflectionCfg['enabled'],
             'latestReflection' => $latestReflection,
+            'bookingAvailable' => $this->bookingSlots->bookableCoaches($tenant)->isNotEmpty(),
         ]);
     }
 }

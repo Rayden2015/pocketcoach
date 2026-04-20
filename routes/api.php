@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\CoachBookingController as AdminCoachBookingController;
 use App\Http\Controllers\Api\V1\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Api\V1\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Api\V1\Admin\ModuleController as AdminModuleController;
 use App\Http\Controllers\Api\V1\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BookingPublicApiController;
 use App\Http\Controllers\Api\V1\CourseSearchController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\Learner\CatalogController;
@@ -33,6 +35,11 @@ Route::prefix('v1')->group(function (): void {
         ->name('api.v1.integrations.qa-tasks');
 
     Route::get('/tenants/{tenant}/branding', [TenantBrandingController::class, 'show']);
+
+    Route::get('/tenants/{tenant}/booking/coaches', [BookingPublicApiController::class, 'coaches']);
+    Route::get('/tenants/{tenant}/booking/slots', [BookingPublicApiController::class, 'slots']);
+    Route::post('/tenants/{tenant}/booking', [BookingPublicApiController::class, 'store'])
+        ->middleware('throttle:bookings');
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -76,6 +83,15 @@ Route::prefix('v1')->group(function (): void {
             Route::apiResource('courses', AdminCourseController::class);
             Route::apiResource('modules', AdminModuleController::class);
             Route::apiResource('lessons', AdminLessonController::class);
+
+            Route::get('bookings', [AdminCoachBookingController::class, 'index']);
+            Route::get('booking-settings', [AdminCoachBookingController::class, 'settings']);
+            Route::put('booking-settings', [AdminCoachBookingController::class, 'updateSettings']);
+            Route::post('booking-availability', [AdminCoachBookingController::class, 'storeAvailability']);
+            Route::delete('booking-availability/{availability}', [AdminCoachBookingController::class, 'destroyAvailability']);
+            Route::post('bookings/{booking}/confirm', [AdminCoachBookingController::class, 'confirm']);
+            Route::post('bookings/{booking}/decline', [AdminCoachBookingController::class, 'decline']);
+            Route::post('bookings/{booking}/cancel', [AdminCoachBookingController::class, 'cancel']);
         });
     });
 });

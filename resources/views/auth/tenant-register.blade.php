@@ -49,5 +49,10 @@
             Already have an account?
             <a href="{{ route('space.login', $tenant) }}" class="font-medium pc-text hover:underline">Log in</a>
         </p>
+        <p class="mt-5 border-t border-stone-100 pt-5 text-center text-xs text-stone-500">
+            Prefer to book first?
+            <a href="{{ route('public.book', $tenant) }}" class="font-medium text-teal-800 hover:underline">Schedule a session</a>
+            without registering.
+        </p>
     </div>
 @endsection

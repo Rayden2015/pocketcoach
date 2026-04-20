@@ -7,7 +7,19 @@
 @section('title', $tenant->name.' — catalog')
 
 @section('content')
-    <h1 class="text-2xl font-semibold tracking-tight">{{ $tenant->name }}</h1>
+    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <h1 class="text-2xl font-semibold tracking-tight">{{ $tenant->name }}</h1>
+        <nav class="flex flex-wrap items-center gap-2 text-sm" aria-label="Space shortcuts">
+            @auth
+                <a href="{{ route('learn.dashboard', $tenant) }}" class="inline-flex items-center rounded-full border border-stone-200 bg-white px-4 py-2 font-medium text-stone-800 shadow-sm hover:border-teal-300 hover:text-teal-900">Space home</a>
+                <a href="{{ route('learn.catalog', $tenant) }}" class="inline-flex items-center rounded-full border border-stone-200 bg-white px-4 py-2 font-medium text-stone-800 shadow-sm hover:border-teal-300 hover:text-teal-900">Member catalog</a>
+            @else
+                <a href="{{ route('space.login', $tenant) }}" class="inline-flex items-center rounded-full border border-stone-200 bg-white px-4 py-2 font-medium text-stone-800 shadow-sm hover:border-teal-300 hover:text-teal-900">Log in</a>
+                <a href="{{ route('space.register', $tenant) }}" class="inline-flex items-center rounded-full border border-stone-200 bg-white px-4 py-2 font-medium text-stone-800 shadow-sm hover:border-teal-300 hover:text-teal-900" title="Create an account to enroll in courses.">Register</a>
+            @endauth
+            <a href="{{ route('public.book', $tenant) }}" class="inline-flex items-center rounded-full bg-teal-600 px-4 py-2 font-semibold text-white shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">Book a session</a>
+        </nav>
+    </div>
 
     @if (! empty($catalogIntroMarkdown))
         <div class="prose prose-stone prose-sm mt-4 max-w-none">
@@ -15,15 +27,24 @@
         </div>
     @endif
 
-    <p class="mt-4 max-w-2xl text-xs leading-relaxed text-stone-500">
-        @auth
-            <a href="{{ route('learn.catalog', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800" title="Your enrollments and lesson progress for this space.">Member catalog</a>
-        @else
-            <a href="{{ route('space.login', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800">Log in</a>
-            <span class="text-stone-400">·</span>
-            <a href="{{ route('space.register', $tenant) }}" class="font-medium text-teal-800 underline decoration-teal-800/30 hover:decoration-teal-800" title="Required to enroll in courses on this space.">Register</a>
-        @endauth
-    </p>
+    <div class="mt-6 max-w-2xl rounded-2xl border px-5 py-4 {{ $bookingAvailable ? 'border-teal-200 bg-gradient-to-br from-teal-50 to-white' : 'border-stone-200 bg-stone-50/80' }}">
+        <p class="text-xs font-semibold uppercase tracking-wide {{ $bookingAvailable ? 'text-teal-900' : 'text-stone-600' }}">Coaching &amp; appointments</p>
+        <p class="mt-2 text-sm {{ $bookingAvailable ? 'text-stone-800' : 'text-stone-600' }}">
+            @if ($bookingAvailable)
+                Request a time with a coach in this space. You can book with or without an account; if you are signed in, the request is tied to your profile.
+            @else
+                Online scheduling will appear here when a coach turns on public booking and adds weekly hours (coach console → Booking setup).
+            @endif
+        </p>
+        <div class="mt-3 flex flex-wrap gap-2">
+            <a href="{{ route('public.book', $tenant) }}" class="inline-flex items-center rounded-full {{ $bookingAvailable ? 'bg-teal-600 text-white hover:bg-teal-700' : 'border border-stone-300 bg-white text-stone-800 hover:border-teal-400' }} px-4 py-2 text-sm font-semibold shadow-sm">
+                {{ $bookingAvailable ? 'Choose a time' : 'View booking page' }}
+            </a>
+            @guest
+                <span class="self-center text-xs text-stone-500">Tip: booking works as a guest — we only need contact details to confirm.</span>
+            @endguest
+        </div>
+    </div>
 
     @if ($reflectionsEnabled && $latestReflection)
         <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4">

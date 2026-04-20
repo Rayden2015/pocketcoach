@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
+import 'package:pocket_coach_mobile/screens/book_coach_screen.dart';
 import 'package:pocket_coach_mobile/screens/catalog_screen.dart';
+import 'package:pocket_coach_mobile/screens/coach_bookings_screen.dart';
 import 'package:pocket_coach_mobile/screens/course_screen.dart';
 import 'package:pocket_coach_mobile/screens/home_screen.dart';
 import 'package:pocket_coach_mobile/screens/lesson_screen.dart';
@@ -149,6 +151,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                   child: const CatalogScreen(),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'book',
+                    builder: (_, __) => const BookCoachScreen(),
+                  ),
+                  GoRoute(
+                    path: 'coach-bookings',
+                    builder: (_, __) => const CoachBookingsScreen(),
+                  ),
                   GoRoute(
                     path: 'notifications',
                     builder: (_, __) => const NotificationsScreen(),

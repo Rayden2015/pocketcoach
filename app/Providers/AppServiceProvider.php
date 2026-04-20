@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Contracts\TaskBoard\TaskBoardGateway;
+use App\Models\Booking;
 use App\Models\LessonProgress;
 use App\Models\ReflectionPrompt;
 use App\Models\ReflectionResponse;
@@ -13,7 +14,10 @@ use App\Services\Payments\PaystackClient;
 use App\Services\Payments\PaystackGateway;
 use App\Services\TaskBoard\NullTaskBoardGateway;
 use App\Services\TaskBoard\TrelloTaskBoardGateway;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -66,6 +70,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('bookings', function (Request $request): Limit {
+            return Limit::perMinute(20)->by($request->ip());
+        });
+
         ReflectionPrompt::observe(ReflectionPromptObserver::class);
 
         Route::bind('tenant', function (string $value): Tenant {
@@ -84,13 +92,29 @@ class AppServiceProvider extends ServiceProvider
             return Tenant::query()->findOrFail((int) $value);
         });
 
-        Route::bind('reflection_prompt', function (string $value, \Illuminate\Routing\Route $route): ReflectionPrompt {
+        $reflectionPromptInTenant = function (string $value, \Illuminate\Routing\Route $route): ReflectionPrompt {
             $tenant = $route->parameter('tenant');
             if (! $tenant instanceof Tenant) {
                 abort(404);
             }
 
             return ReflectionPrompt::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($value)
+                ->firstOrFail();
+        };
+
+        // Learn routes use `{reflection_prompt}`; coach `Route::resource('reflections', …)` uses `{reflection}`.
+        Route::bind('reflection_prompt', $reflectionPromptInTenant);
+        Route::bind('reflection', $reflectionPromptInTenant);
+
+        Route::bind('booking', function (string $value, \Illuminate\Routing\Route $route): Booking {
+            $tenant = $route->parameter('tenant');
+            if (! $tenant instanceof Tenant) {
+                abort(404);
+            }
+
+            return Booking::query()
                 ->where('tenant_id', $tenant->id)
                 ->whereKey($value)
                 ->firstOrFail();

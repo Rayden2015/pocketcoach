@@ -3,6 +3,17 @@ import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
 import 'package:pocket_coach_mobile/providers/user_provider.dart';
 
 /// Membership rows from `GET /api/v1/me` (empty while loading / error).
+/// True when the active space membership has a staff role (coach console on web).
+final isStaffInCurrentTenantProvider = Provider<bool>((ref) {
+  final slug = ref.watch(tenantSlugProvider);
+  for (final m in ref.watch(userMembershipsProvider)) {
+    if (m['tenant_slug'] == slug && m['is_staff'] == true) {
+      return true;
+    }
+  }
+  return false;
+});
+
 final userMembershipsProvider = Provider<List<Map<String, dynamic>>>((ref) {
   final u = ref.watch(currentUserProvider);
   return u.maybeWhen(

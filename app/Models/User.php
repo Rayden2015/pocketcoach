@@ -90,4 +90,12 @@ class User extends Authenticatable
 
         return $this->memberships()->whereIn('role', TenantRole::staffValues())->exists();
     }
+
+    /**
+     * @return HasMany<CoachBookingSetting, $this>
+     */
+    public function coachBookingSettings(): HasMany
+    {
+        return $this->hasMany(CoachBookingSetting::class, 'coach_user_id');
+    }
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:pocket_coach_mobile/config/api_config.dart';
+import 'package:pocket_coach_mobile/models/booking_models.dart';
 import 'package:pocket_coach_mobile/models/catalog_models.dart';
 import 'package:pocket_coach_mobile/models/continue_learning.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
@@ -504,6 +505,149 @@ class PocketCoachApi {
       message: msg,
       freeProductId: freeProductId,
     );
+  }
+
+  Future<List<BookableCoach>> fetchBookableCoaches({required String tenantSlug}) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/booking/coaches'),
+      headers: _jsonHeaders(null),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => BookableCoach.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<List<BookingSlot>> fetchBookingSlots({
+    required String tenantSlug,
+    required int coachUserId,
+    String? from,
+    String? to,
+  }) async {
+    final qp = <String, String>{'coach_user_id': '$coachUserId'};
+    if (from != null && from.isNotEmpty) {
+      qp['from'] = from;
+    }
+    if (to != null && to.isNotEmpty) {
+      qp['to'] = to;
+    }
+    final uri = _u('/v1/tenants/$tenantSlug/booking/slots').replace(queryParameters: qp);
+    final res = await _client.get(uri, headers: _jsonHeaders(null));
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => BookingSlot.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  /// Authenticated learners attach the booking to their account; use bearer from the session when logged in.
+  Future<Map<String, dynamic>> createBookingRequest({
+    String? bearer,
+    required String tenantSlug,
+    required int coachUserId,
+    required String startsAt,
+    required String endsAt,
+    String? bookerMessage,
+    String? guestName,
+    String? guestEmail,
+    String? guestPhone,
+  }) async {
+    final body = <String, dynamic>{
+      'coach_user_id': coachUserId,
+      'starts_at': startsAt,
+      'ends_at': endsAt,
+    };
+    if (bookerMessage != null && bookerMessage.isNotEmpty) {
+      body['booker_message'] = bookerMessage;
+    }
+    if (guestName != null) {
+      body['guest_name'] = guestName;
+    }
+    if (guestEmail != null) {
+      body['guest_email'] = guestEmail;
+    }
+    if (guestPhone != null) {
+      body['guest_phone'] = guestPhone;
+    }
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/booking'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(body),
+    );
+    return _decodeObject(res);
+  }
+
+  Future<List<CoachBookingRow>> fetchCoachBookings({
+    required String bearer,
+    required String tenantSlug,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/admin/bookings'),
+      headers: _jsonHeaders(bearer),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .map((e) => CoachBookingRow.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  Future<void> confirmCoachBooking({
+    required String bearer,
+    required String tenantSlug,
+    required int bookingId,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/admin/bookings/$bookingId/confirm'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<void> declineCoachBooking({
+    required String bearer,
+    required String tenantSlug,
+    required int bookingId,
+    String? coachInternalNote,
+  }) async {
+    final body = <String, dynamic>{};
+    if (coachInternalNote != null && coachInternalNote.isNotEmpty) {
+      body['coach_internal_note'] = coachInternalNote;
+    }
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/admin/bookings/$bookingId/decline'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(body),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<void> cancelCoachBooking({
+    required String bearer,
+    required String tenantSlug,
+    required int bookingId,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/admin/bookings/$bookingId/cancel'),
+      headers: _jsonHeaders(bearer),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
   }
 
   void close() => _client.close();

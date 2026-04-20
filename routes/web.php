@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\SpaceGateController;
 use App\Http\Controllers\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Auth\TenantSessionController;
 use App\Http\Controllers\Platform\TenantAdminController;
+use App\Http\Controllers\Web\Coach\CoachBookingController;
 use App\Http\Controllers\Web\Coach\CourseController as CoachCourseController;
 use App\Http\Controllers\Web\Coach\LearnerSubmissionController as CoachLearnerSubmissionController;
 use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
@@ -29,8 +30,10 @@ use App\Http\Controllers\Web\LearnReflectionController;
 use App\Http\Controllers\Web\LearnSpaceJoinController;
 use App\Http\Controllers\Web\MyLearningController;
 use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\PublicBookingController;
 use App\Http\Controllers\Web\PublicCatalogController;
 use App\Http\Controllers\Web\PublicCatalogTrackController;
+use App\Http\Controllers\Web\SignedCoachBookingMailController;
 use App\Http\Controllers\Web\SpaceHubController;
 use App\Http\Controllers\Web\SubmissionConversationController;
 use App\Models\Tenant;
@@ -92,6 +95,25 @@ Route::prefix('{tenant:slug}')->group(function (): void {
     })->name('space.welcome');
 
     Route::get('/catalog', [PublicCatalogController::class, 'show'])->name('public.catalog');
+
+    Route::get('/book', [PublicBookingController::class, 'show'])->name('public.book');
+    Route::post('/book', [PublicBookingController::class, 'store'])
+        ->middleware('throttle:bookings')
+        ->name('public.book.store');
+
+    Route::middleware('signed')->group(function (): void {
+        Route::get('/coach/bookings/{booking}/respond/confirm', [SignedCoachBookingMailController::class, 'confirm'])
+            ->name('mail.booking.confirm');
+        Route::get('/coach/bookings/{booking}/respond/decline', [SignedCoachBookingMailController::class, 'decline'])
+            ->name('mail.booking.decline');
+    });
+
+    Route::get('/booking/responded', function (Tenant $tenant) {
+        return view('booking-mail-result', [
+            'tenant' => $tenant,
+            'outcome' => request()->query('outcome', 'none'),
+        ]);
+    })->name('booking.mail.result');
 
     Route::middleware('guest')->group(function (): void {
         Route::get('/register', [TenantRegisteredUserController::class, 'create'])->name('space.register');
@@ -161,6 +183,16 @@ Route::prefix('{tenant:slug}')->group(function (): void {
                 return redirect()->route('coach.learner-submissions.index', ['tenant' => $tenant, 'tab' => 'reflections']);
             })->name('reflections.submissions.index');
             Route::resource('reflections', CoachReflectionPromptController::class);
+
+            Route::get('bookings', [CoachBookingController::class, 'index'])->name('bookings.index');
+            Route::get('booking/settings', [CoachBookingController::class, 'editSettings'])->name('booking.settings');
+            Route::put('booking/settings', [CoachBookingController::class, 'updateSettings'])->name('booking.settings.update');
+            Route::post('booking/availability', [CoachBookingController::class, 'storeAvailability'])->name('booking.availability.store');
+            Route::delete('booking/availability/{availability}', [CoachBookingController::class, 'destroyAvailability'])
+                ->name('booking.availability.destroy');
+            Route::post('bookings/{booking}/confirm', [CoachBookingController::class, 'confirm'])->name('bookings.confirm');
+            Route::post('bookings/{booking}/decline', [CoachBookingController::class, 'decline'])->name('bookings.decline');
+            Route::post('bookings/{booking}/cancel', [CoachBookingController::class, 'cancelCoach'])->name('bookings.cancel');
         });
     });
 });

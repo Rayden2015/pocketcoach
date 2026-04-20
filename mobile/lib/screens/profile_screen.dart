@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocket_coach_mobile/api/pocket_coach_api.dart';
 import 'package:pocket_coach_mobile/providers/api_provider.dart';
+import 'package:pocket_coach_mobile/providers/membership_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/user_provider.dart';
 
@@ -156,6 +157,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
+              if (ref.watch(isStaffInCurrentTenantProvider)) ...[
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_note_outlined),
+                  title: const Text('Coach bookings'),
+                  subtitle: const Text('Confirm or decline requests'),
+                  onTap: () => context.push('/catalog/coach-bookings'),
+                ),
+              ],
               const SizedBox(height: 20),
               TextField(
                 controller: _name,

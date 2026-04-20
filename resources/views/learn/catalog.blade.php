@@ -11,6 +11,7 @@
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <a href="{{ route('learn.dashboard', $tenant) }}" class="text-stone-600 hover:text-teal-800">Home</a>
             <a href="{{ route('my-learning') }}" class="text-stone-600 hover:text-teal-800">My learning</a>
+            <a href="{{ route('public.book', $tenant) }}" class="text-teal-800 font-medium hover:underline" title="Request a coaching time; works for guests too.">Book a session</a>
             <a href="{{ route('profile') }}" class="text-stone-600 hover:text-teal-800">Profile</a>
             <a href="{{ route('learn.continue', $tenant) }}" class="rounded-full bg-teal-600 px-3 py-1.5 text-white hover:bg-teal-700">Continue</a>
         </div>

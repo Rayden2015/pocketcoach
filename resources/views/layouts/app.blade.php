@@ -109,6 +109,9 @@
                             <a href="{{ route('learn.dashboard', $tenant) }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
                                 Space home
                             </a>
+                            <a href="{{ route('public.book', $tenant) }}" class="inline-flex items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 shadow-sm transition hover:bg-teal-100" title="Request a coaching session in this space.">
+                                Book a session
+                            </a>
                             <a href="{{ route('profile') }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--pc-brand)] shadow-sm transition hover:border-[var(--pc-accent)] hover:bg-slate-50">
                                 Profile
                             </a>

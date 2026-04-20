@@ -25,6 +25,11 @@ class HomeScreen extends ConsumerWidget {
         title: const SpaceSwitcherButton(),
         actions: [
           IconButton(
+            icon: const Icon(Icons.event_available_outlined),
+            tooltip: 'Book a coach',
+            onPressed: () => context.push('/catalog/book'),
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             tooltip: 'Search courses',
             onPressed: () => context.push('/search'),
@@ -80,6 +85,18 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ],
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.event_available_outlined),
+                      title: const Text('Book a session'),
+                      subtitle: const Text('Pick a coach and time in this space'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/catalog/book'),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 Text(
                   'Your week',

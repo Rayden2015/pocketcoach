@@ -25,5 +25,7 @@
         <a href="{{ route('coach.lessons.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.lessons.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Lessons</a>
         <a href="{{ route('coach.reflections.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.reflections.*') && ! request()->routeIs('coach.reflections.submissions.*') ? 'bg-amber-50 font-medium text-amber-950' : 'text-stone-600' }}">Prompts</a>
         <a href="{{ route('coach.learner-submissions.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.learner-submissions.*') ? 'bg-amber-50 font-medium text-amber-950' : 'text-stone-600' }}">Learner submissions</a>
+        <a href="{{ route('coach.bookings.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.bookings.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Bookings</a>
+        <a href="{{ route('coach.booking.settings', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.booking.settings*') || request()->routeIs('coach.booking.availability.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Booking setup</a>
     </nav>
 </div>

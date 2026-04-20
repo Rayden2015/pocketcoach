@@ -85,6 +85,11 @@ class CatalogScreen extends ConsumerWidget {
         title: const SpaceSwitcherButton(),
         actions: [
           IconButton(
+            icon: const Icon(Icons.event_available_outlined),
+            tooltip: 'Book a coach',
+            onPressed: () => context.push('/catalog/book'),
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             tooltip: 'Search courses',
             onPressed: () => context.push('/search'),

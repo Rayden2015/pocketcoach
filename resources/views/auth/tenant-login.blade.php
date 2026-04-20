@@ -43,5 +43,10 @@
             New here?
             <a href="{{ route('space.register', $tenant) }}" class="font-medium pc-text hover:underline">Create an account</a>
         </p>
+        <p class="mt-5 border-t border-stone-100 pt-5 text-center text-xs text-stone-500">
+            Only need a session?
+            <a href="{{ route('public.book', $tenant) }}" class="font-medium text-teal-800 hover:underline">Book a coach</a>
+            — no account required (we ask for contact details).
+        </p>
     </div>
 @endsection

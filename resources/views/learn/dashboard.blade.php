@@ -15,6 +15,7 @@
         </div>
         <div class="flex flex-wrap gap-2 text-sm">
             <a href="{{ route('learn.catalog', $tenant) }}" class="rounded-full border border-stone-300 bg-white px-4 py-2 font-medium text-stone-800 hover:border-teal-400">Catalog</a>
+            <a href="{{ route('public.book', $tenant) }}" class="rounded-full border border-teal-200 bg-teal-50 px-4 py-2 font-medium text-teal-900 hover:bg-teal-100" title="Open times are set by your coach.">Book a session</a>
             <a href="{{ route('learn.continue', $tenant) }}" class="rounded-full bg-teal-600 px-4 py-2 font-medium text-white hover:bg-teal-700">Continue</a>
         </div>
     </div>
@@ -52,6 +53,7 @@
                     <a href="{{ route('coach.courses.index', $tenant) }}" class="rounded-full border border-stone-200 bg-white px-3 py-1.5 font-medium text-teal-800 hover:bg-stone-50">Courses</a>
                     <a href="{{ route('coach.reflections.index', $tenant) }}" class="rounded-full border border-stone-200 bg-white px-3 py-1.5 font-medium text-teal-800 hover:bg-stone-50">Reflections</a>
                     <a href="{{ route('coach.learner-submissions.index', $tenant) }}" class="rounded-full border border-stone-200 bg-white px-3 py-1.5 font-medium text-teal-800 hover:bg-stone-50">Learner submissions</a>
+                    <a href="{{ route('coach.bookings.index', $tenant) }}" class="rounded-full border border-stone-200 bg-white px-3 py-1.5 font-medium text-teal-800 hover:bg-stone-50">Bookings</a>
                 </div>
                 @if (($coach['scheduled_reflections_pending'] ?? 0) > 0)
                     <p class="mt-3 text-xs text-amber-900/90">
