@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('timezone', 64)->nullable();
             $table->timestamps();
 
-            $table->unique(['tenant_id', 'coach_user_id']);
+            // Explicit short names: MySQL identifier limit is 64 characters.
+            $table->unique(['tenant_id', 'coach_user_id'], 'cbs_tenant_coach_unique');
         });
 
         Schema::create('coach_weekly_availabilities', function (Blueprint $table): void {
@@ -32,7 +33,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->timestamps();
 
-            $table->index(['tenant_id', 'coach_user_id', 'day_of_week']);
+            $table->index(['tenant_id', 'coach_user_id', 'day_of_week'], 'cwa_tenant_coach_day_idx');
         });
 
         Schema::create('bookings', function (Blueprint $table): void {
@@ -51,8 +52,8 @@ return new class extends Migration
             $table->timestamp('responded_at')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'coach_user_id', 'starts_at']);
-            $table->index(['tenant_id', 'status']);
+            $table->index(['tenant_id', 'coach_user_id', 'starts_at'], 'bookings_tenant_coach_starts_idx');
+            $table->index(['tenant_id', 'status'], 'bookings_tenant_status_idx');
         });
     }
 
