@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Booking\BookingSlotService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class SubmitBookingRequestAction
 {
@@ -32,6 +33,12 @@ final class SubmitBookingRequestAction
     ): array {
         $coaches = $this->slots->bookableCoaches($tenant);
         if (! $coaches->contains('id', $coachUserId)) {
+            Log::warning('booking.request.rejected', [
+                'tenant_id' => $tenant->id,
+                'coach_user_id' => $coachUserId,
+                'code' => 'coach',
+            ]);
+
             return ['ok' => false, 'code' => 'coach'];
         }
 
@@ -41,6 +48,14 @@ final class SubmitBookingRequestAction
             });
 
         if (! $allowed) {
+            Log::warning('booking.request.rejected', [
+                'tenant_id' => $tenant->id,
+                'coach_user_id' => $coachUserId,
+                'code' => 'slot',
+                'starts_at' => $startsUtc->toIso8601String(),
+                'ends_at' => $endsUtc->toIso8601String(),
+            ]);
+
             return ['ok' => false, 'code' => 'slot'];
         }
 
@@ -64,8 +79,27 @@ final class SubmitBookingRequestAction
         });
 
         if ($booking === null) {
+            Log::warning('booking.request.rejected', [
+                'tenant_id' => $tenant->id,
+                'coach_user_id' => $coachUserId,
+                'code' => 'taken',
+                'starts_at' => $startsUtc->toIso8601String(),
+                'ends_at' => $endsUtc->toIso8601String(),
+            ]);
+
             return ['ok' => false, 'code' => 'taken'];
         }
+
+        Log::info('booking.request.created', [
+            'booking_id' => $booking->id,
+            'tenant_id' => $tenant->id,
+            'coach_user_id' => $coachUserId,
+            'booker_user_id' => $user?->id,
+            'guest' => $user === null,
+            'starts_at' => $booking->starts_at?->toIso8601String(),
+            'ends_at' => $booking->ends_at?->toIso8601String(),
+            'status' => $booking->status->value,
+        ]);
 
         return ['ok' => true, 'booking' => $booking];
     }

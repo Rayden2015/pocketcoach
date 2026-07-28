@@ -124,6 +124,7 @@ class LearnerReflectionController extends Controller
             'id' => $prompt->id,
             'title' => $prompt->title,
             'body' => $prompt->body,
+            'image_url' => $prompt->resolvedImageUrl(),
             'published_at' => $prompt->published_at?->toIso8601String(),
         ];
     }

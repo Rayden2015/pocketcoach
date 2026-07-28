@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class ReflectionPrompt extends Model
 {
@@ -13,10 +14,29 @@ class ReflectionPrompt extends Model
         'author_id',
         'title',
         'body',
+        'image_disk_path',
         'is_published',
         'published_at',
         'scheduled_publish_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (ReflectionPrompt $prompt): void {
+            if ($prompt->image_disk_path) {
+                Storage::disk('public')->delete($prompt->image_disk_path);
+            }
+        });
+    }
+
+    public function resolvedImageUrl(): ?string
+    {
+        if ($this->image_disk_path) {
+            return Storage::disk('public')->url($this->image_disk_path);
+        }
+
+        return null;
+    }
 
     protected function casts(): array
     {

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Contracts\TaskBoard\TaskBoardGateway;
+use App\Listeners\LogNotificationFailed;
 use App\Models\Booking;
 use App\Models\LessonProgress;
 use App\Models\ReflectionPrompt;
@@ -16,6 +17,8 @@ use App\Services\TaskBoard\NullTaskBoardGateway;
 use App\Services\TaskBoard\TrelloTaskBoardGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Events\NotificationFailed;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +76,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('bookings', function (Request $request): Limit {
             return Limit::perMinute(20)->by($request->ip());
         });
+
+        Event::listen(NotificationFailed::class, LogNotificationFailed::class);
 
         ReflectionPrompt::observe(ReflectionPromptObserver::class);
 

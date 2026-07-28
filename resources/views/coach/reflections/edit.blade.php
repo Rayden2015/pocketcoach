@@ -10,7 +10,7 @@
     </div>
 
     @if ($prompt->is_published)
-        <form method="POST" action="{{ route('coach.reflections.update', [$tenant, $prompt]) }}" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('coach.reflections.update', [$tenant, $prompt]) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             @csrf
             @method('PUT')
             <p class="rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-900">This prompt is live. To schedule a new daily post, create another reflection.</p>
@@ -24,6 +24,7 @@
                 <textarea id="body" name="body" rows="10" required
                     class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500">{{ old('body', $prompt->body) }}</textarea>
             </div>
+            @include('coach.reflections.partials.image-field', ['prompt' => $prompt])
             <label class="flex items-center gap-2 text-sm text-stone-700">
                 <input type="hidden" name="is_published" value="0">
                 <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $prompt->is_published))>
@@ -34,7 +35,7 @@
             </div>
         </form>
     @else
-        <form method="POST" action="{{ route('coach.reflections.update', [$tenant, $prompt]) }}" class="mt-6 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('coach.reflections.update', [$tenant, $prompt]) }}" enctype="multipart/form-data" class="mt-6 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             @csrf
             @method('PUT')
             <div>
@@ -48,8 +49,11 @@
                     class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500">{{ old('body', $prompt->body) }}</textarea>
             </div>
 
+            @include('coach.reflections.partials.image-field', ['prompt' => $prompt])
+
             <fieldset class="space-y-3">
                 <legend class="text-sm font-medium text-stone-800">When to publish</legend>
+                <p class="text-xs text-stone-500">Scheduled prompts publish automatically. Learners are notified by email, in-app alerts, and browser notifications when allowed.</p>
                 <label class="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
                     <input type="radio" name="publish_timing" value="schedule" class="mt-1" @checked(old('publish_timing', 'schedule') === 'schedule')>
                     <span>
@@ -74,7 +78,7 @@
                     <input type="radio" name="publish_timing" value="now" class="mt-1" @checked(old('publish_timing', 'schedule') === 'now')>
                     <span>
                         <span class="font-medium">Publish now</span>
-                        <span class="block text-xs text-stone-500">Notify learners immediately per space settings.</span>
+                        <span class="block text-xs text-stone-500">Notify learners immediately by email and in-app alerts.</span>
                     </span>
                 </label>
             </fieldset>

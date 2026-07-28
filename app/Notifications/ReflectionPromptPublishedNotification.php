@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 
 class ReflectionPromptPublishedNotification extends Notification implements ShouldQueue
 {
@@ -55,6 +56,7 @@ class ReflectionPromptPublishedNotification extends Notification implements Shou
             'reflection_prompt_id' => $this->prompt->id,
             'tenant_slug' => $tenant->slug,
             'url' => $url,
+            'image_url' => $this->prompt->resolvedImageUrl(),
         ];
     }
 
@@ -64,10 +66,18 @@ class ReflectionPromptPublishedNotification extends Notification implements Shou
         $url = $tenant->publicUrl('learn/reflections/'.$this->prompt->id);
         $subject = ($this->prompt->title ?: 'Daily reflection').' — '.$tenant->name;
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject($subject)
             ->line('Your coach posted a new reflection in '.$tenant->name.'.')
-            ->line(str(strip_tags($this->prompt->body))->limit(500)->toString())
+            ->line(str(strip_tags($this->prompt->body))->limit(500)->toString());
+
+        if ($imageUrl = $this->prompt->resolvedImageUrl()) {
+            $mail->line(new HtmlString(
+                '<p style="margin:16px 0;"><img src="'.e($imageUrl).'" alt="Reflection image" style="max-width:100%;height:auto;border-radius:8px;"></p>'
+            ));
+        }
+
+        return $mail
             ->action('Open reflection', $url)
             ->line('Reply in the app when you are ready.');
     }

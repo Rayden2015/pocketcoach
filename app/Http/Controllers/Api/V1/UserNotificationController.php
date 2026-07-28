@@ -93,9 +93,26 @@ class UserNotificationController extends Controller
 
     public function unreadCount(Request $request): JsonResponse
     {
-        return response()->json([
-            'count' => $request->user()->unreadNotifications()->count(),
-        ]);
+        $user = $request->user();
+        $count = $user->unreadNotifications()->count();
+        $payload = ['count' => $count];
+
+        if ($count > 0) {
+            $latest = $user->unreadNotifications()
+                ->orderByDesc('created_at')
+                ->first();
+
+            if ($latest !== null) {
+                $data = $latest->data ?? [];
+                $payload['latest'] = [
+                    'title' => $this->notificationTitle($data, (string) $latest->type),
+                    'preview' => $this->notificationPreview($data),
+                    'url' => $this->resolveNotificationUrl($data),
+                ];
+            }
+        }
+
+        return response()->json($payload);
     }
 
     public function markAsRead(Request $request, string $id): JsonResponse

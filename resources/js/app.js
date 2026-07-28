@@ -182,8 +182,10 @@ function initBrowserNotifications() {
             const { data } = await window.axios.get(unreadUrl);
             const n = typeof data?.count === 'number' ? data.count : 0;
             if (lastCount !== null && n > lastCount && Notification.permission === 'granted') {
-                new Notification('Pocket Coach', {
-                    body: 'You have new notifications.',
+                const title = data?.latest?.title ?? 'Pocket Coach';
+                const body = data?.latest?.preview ?? 'You have new notifications.';
+                new Notification(title, {
+                    body,
                     tag: 'pc-unread',
                 });
             }

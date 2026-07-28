@@ -8,6 +8,8 @@ use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -47,6 +49,7 @@ class ReflectionPromptController extends Controller
         $validated = $request->validate([
             'title' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:65535'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
             'publish_timing' => ['required', Rule::in(['now', 'schedule'])],
             'scheduled_date' => ['exclude_if:publish_timing,now', 'required', 'date'],
             'scheduled_time' => ['exclude_if:publish_timing,now', 'required', 'date_format:H:i'],
@@ -54,20 +57,22 @@ class ReflectionPromptController extends Controller
 
         $timing = $validated['publish_timing'];
         $publishAttrs = $this->publishAttributesFromTiming($request, $timing);
+        $imagePath = $this->storeImageFromRequest($request, $tenant);
 
         ReflectionPrompt::query()->create([
             'tenant_id' => $tenant->id,
             'author_id' => $request->user()?->id,
             'title' => $validated['title'] ?? null,
             'body' => $validated['body'],
+            'image_disk_path' => $imagePath,
             ...$publishAttrs,
         ]);
 
         $status = 'Reflection prompt saved.';
         if (! $publishAttrs['is_published'] && $publishAttrs['scheduled_publish_at'] !== null) {
-            $status = 'Reflection scheduled for '.$publishAttrs['scheduled_publish_at']->timezone(config('app.timezone'))->format('M j, Y g:i A').'. Use `php artisan schedule:work` (or cron) so it publishes on time.';
+            $status = 'Reflection scheduled for '.$publishAttrs['scheduled_publish_at']->timezone(config('app.timezone'))->format('M j, Y g:i A').'. Learners will be notified by email and in-app alerts when it goes live.';
         } elseif ($publishAttrs['is_published']) {
-            $status = 'Reflection published; learners are notified per your space settings.';
+            $status = 'Reflection published. Learners are being notified by email and in-app alerts.';
         }
 
         return redirect()
@@ -106,13 +111,17 @@ class ReflectionPromptController extends Controller
             $validated = $request->validate([
                 'title' => ['nullable', 'string', 'max:255'],
                 'body' => ['required', 'string', 'max:65535'],
+                'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
+                'remove_image' => ['nullable', 'boolean'],
                 'is_published' => ['nullable', 'boolean'],
             ]);
 
             $publish = $request->boolean('is_published');
+            $imagePath = $this->imagePathAfterUpdate($request, $tenant, $reflection);
             $reflection->fill([
                 'title' => $validated['title'] ?? null,
                 'body' => $validated['body'],
+                'image_disk_path' => $imagePath,
                 'is_published' => $publish,
                 'published_at' => $publish
                     ? ($reflection->published_at ?? now())
@@ -129,24 +138,28 @@ class ReflectionPromptController extends Controller
         $validated = $request->validate([
             'title' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:65535'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
+            'remove_image' => ['nullable', 'boolean'],
             'publish_timing' => ['required', Rule::in(['now', 'schedule'])],
             'scheduled_date' => ['exclude_if:publish_timing,now', 'required', 'date'],
             'scheduled_time' => ['exclude_if:publish_timing,now', 'required', 'date_format:H:i'],
         ]);
 
         $publishAttrs = $this->publishAttributesFromTiming($request, $validated['publish_timing']);
+        $imagePath = $this->imagePathAfterUpdate($request, $tenant, $reflection);
         $reflection->fill([
             'title' => $validated['title'] ?? null,
             'body' => $validated['body'],
+            'image_disk_path' => $imagePath,
             ...$publishAttrs,
         ]);
         $reflection->save();
 
         $status = 'Reflection prompt updated.';
         if (! $publishAttrs['is_published'] && $publishAttrs['scheduled_publish_at'] !== null) {
-            $status = 'Schedule updated for '.$publishAttrs['scheduled_publish_at']->timezone(config('app.timezone'))->format('M j, Y g:i A').'.';
+            $status = 'Schedule updated for '.$publishAttrs['scheduled_publish_at']->timezone(config('app.timezone'))->format('M j, Y g:i A').'. Learners will be notified when it goes live.';
         } elseif ($publishAttrs['is_published']) {
-            $status = 'Reflection published; learners are notified per your space settings.';
+            $status = 'Reflection published. Learners are being notified by email and in-app alerts.';
         }
 
         return redirect()
@@ -195,5 +208,38 @@ class ReflectionPromptController extends Controller
             'published_at' => null,
             'scheduled_publish_at' => $at,
         ];
+    }
+
+    private function storeImageFromRequest(Request $request, Tenant $tenant): ?string
+    {
+        if (! $request->hasFile('image')) {
+            return null;
+        }
+
+        $file = $request->file('image');
+        if (! $file instanceof UploadedFile) {
+            return null;
+        }
+
+        return $file->store("reflections/{$tenant->id}", 'public');
+    }
+
+    private function imagePathAfterUpdate(Request $request, Tenant $tenant, ReflectionPrompt $reflection): ?string
+    {
+        if ($request->boolean('remove_image') && $reflection->image_disk_path) {
+            Storage::disk('public')->delete($reflection->image_disk_path);
+
+            return null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($reflection->image_disk_path) {
+                Storage::disk('public')->delete($reflection->image_disk_path);
+            }
+
+            return $this->storeImageFromRequest($request, $tenant);
+        }
+
+        return $reflection->image_disk_path;
     }
 }

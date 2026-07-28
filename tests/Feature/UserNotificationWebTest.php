@@ -34,7 +34,9 @@ class UserNotificationWebTest extends TestCase
         $this->actingAs($user)
             ->getJson(route('notifications.unread-count'))
             ->assertOk()
-            ->assertJsonPath('count', 1);
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('latest.title', 'Hello')
+            ->assertJsonPath('latest.preview', 'Preview line');
 
         $this->actingAs($user)
             ->getJson(route('notifications.index'))

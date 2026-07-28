@@ -9,7 +9,7 @@
         <a href="{{ route('coach.reflections.index', $tenant) }}" class="text-teal-700 hover:underline">← Reflections</a>
     </div>
 
-    <form method="POST" action="{{ route('coach.reflections.store', $tenant) }}" class="mt-6 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <form method="POST" action="{{ route('coach.reflections.store', $tenant) }}" enctype="multipart/form-data" class="mt-6 space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         @csrf
         <div>
             <label for="title" class="block text-sm font-medium text-stone-700">Title (optional)</label>
@@ -22,9 +22,11 @@
                 class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500">{{ old('body') }}</textarea>
         </div>
 
+        @include('coach.reflections.partials.image-field')
+
         <fieldset class="space-y-3">
             <legend class="text-sm font-medium text-stone-800">When to publish</legend>
-            <p class="text-xs text-stone-500">Scheduled prompts go live automatically when the server runs <code class="rounded bg-stone-100 px-1">php artisan schedule:work</code> or a cron hitting <code class="rounded bg-stone-100 px-1">schedule:run</code> every minute.</p>
+            <p class="text-xs text-stone-500">Scheduled prompts publish automatically at the date and time you choose. Learners are notified by email, in-app alerts, and browser notifications (when they have allowed them).</p>
 
             <label class="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
                 <input type="radio" name="publish_timing" value="schedule" class="mt-1" @checked(old('publish_timing', 'schedule') === 'schedule')>
@@ -50,7 +52,7 @@
                 <input type="radio" name="publish_timing" value="now" class="mt-1" @checked(old('publish_timing') === 'now')>
                 <span>
                     <span class="font-medium">Publish now</span>
-                    <span class="block text-xs text-stone-500">Notify learners immediately per space settings.</span>
+                    <span class="block text-xs text-stone-500">Notify learners immediately by email and in-app alerts.</span>
                 </span>
             </label>
         </fieldset>

@@ -49,6 +49,7 @@ class ReflectionPrompt {
     required this.id,
     required this.title,
     required this.body,
+    this.imageUrl,
     this.publishedAt,
     this.myResponse,
   });
@@ -65,6 +66,7 @@ class ReflectionPrompt {
       id: id,
       title: j['title'] as String? ?? '',
       body: j['body'] as String? ?? '',
+      imageUrl: j['image_url'] as String?,
       publishedAt: j['published_at'] as String?,
       myResponse: mine,
     );
@@ -73,6 +75,7 @@ class ReflectionPrompt {
   final int id;
   final String title;
   final String body;
+  final String? imageUrl;
   final String? publishedAt;
   final ReflectionMyResponse? myResponse;
 }

@@ -60,7 +60,22 @@ return [
     */
 
     'log_api_http' => filter_var(
-        env('LOG_API_HTTP', env('APP_DEBUG', false)),
+        env('LOG_API_HTTP', env('APP_ENV') === 'production' ? true : env('APP_DEBUG', false)),
+        FILTER_VALIDATE_BOOLEAN
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Web HTTP request logging (LogWebHttp middleware)
+    |--------------------------------------------------------------------------
+    |
+    | When true, writes structured lines for web mutations (POST/PUT/PATCH/DELETE)
+    | and failed GETs to the main daily log. Enabled by default in production.
+    |
+    */
+
+    'log_web_http' => filter_var(
+        env('LOG_WEB_HTTP', env('APP_ENV') === 'production' ? true : env('APP_DEBUG', false)),
         FILTER_VALIDATE_BOOLEAN
     ),
 

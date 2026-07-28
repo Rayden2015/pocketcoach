@@ -8,13 +8,43 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ReflectionScheduleTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_coach_can_upload_image_with_reflection(): void
+    {
+        Storage::fake('public');
+
+        $tenant = Tenant::query()->create(['name' => 'T', 'slug' => 't-img', 'status' => Tenant::STATUS_ACTIVE]);
+        $coach = User::factory()->create();
+        TenantMembership::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $coach->id,
+            'role' => 'owner',
+        ]);
+
+        $this->actingAs($coach)
+            ->post(route('coach.reflections.store', $tenant), [
+                'title' => 'With image',
+                'body' => 'Describe what you see.',
+                'publish_timing' => 'now',
+                'image' => UploadedFile::fake()->image('prompt.jpg'),
+            ])
+            ->assertRedirect(route('coach.reflections.index', $tenant));
+
+        $prompt = ReflectionPrompt::query()->where('tenant_id', $tenant->id)->first();
+        $this->assertNotNull($prompt);
+        $this->assertNotNull($prompt->image_disk_path);
+        Storage::disk('public')->assertExists($prompt->image_disk_path);
+        $this->assertNotNull($prompt->resolvedImageUrl());
+    }
 
     public function test_coach_can_create_scheduled_reflection_at_seven_am(): void
     {

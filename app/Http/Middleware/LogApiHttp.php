@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -34,9 +35,13 @@ class LogApiHttp
         $payload = [
             'method' => $request->method(),
             'path' => '/'.$request->path(),
+            'route' => $request->route()?->getName(),
             'status' => $response->getStatusCode(),
             'ms' => $durationMs,
             'request_id' => $request->attributes->get('request_id'),
+            'user_id' => $request->user()?->id,
+            'tenant_id' => $this->tenantFromRequest($request)?->id,
+            'tenant_slug' => $this->tenantFromRequest($request)?->slug,
             'client' => $this->clientHint($request),
             'request' => $this->safeRequestPayload($request),
             'response' => $this->safeResponseSummary($response),
@@ -79,6 +84,15 @@ class LogApiHttp
             return ['has_id_token' => $request->filled('id_token')];
         }
 
+        if ($request->is('api/*/booking') && $request->isMethod('POST')) {
+            return [
+                'coach_user_id' => $request->input('coach_user_id'),
+                'starts_at' => $request->input('starts_at'),
+                'ends_at' => $request->input('ends_at'),
+                'guest' => $request->user() === null,
+            ];
+        }
+
         if ($request->getQueryString() !== '') {
             return ['query' => $request->query()];
         }
@@ -116,5 +130,12 @@ class LogApiHttp
         $ua = $request->userAgent();
 
         return is_string($ua) && $ua !== '' ? mb_substr($ua, 0, 160) : null;
+    }
+
+    private function tenantFromRequest(Request $request): ?Tenant
+    {
+        $tenant = $request->route('tenant');
+
+        return $tenant instanceof Tenant ? $tenant : null;
     }
 }

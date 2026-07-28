@@ -22,6 +22,11 @@
         @if ($prompt->title)
             <h1 class="mt-2 text-2xl font-semibold text-stone-900">{{ $prompt->title }}</h1>
         @endif
+        @if ($imageUrl = $prompt->resolvedImageUrl())
+            <figure class="mt-4">
+                <img src="{{ $imageUrl }}" alt="" class="max-h-96 w-full rounded-xl border border-stone-200 object-contain">
+            </figure>
+        @endif
         <div class="prose prose-stone prose-sm mt-4 max-w-none">
             {!! Str::markdown($prompt->body) !!}
         </div>

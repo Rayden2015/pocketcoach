@@ -134,6 +134,17 @@ class _ReflectionScreenState extends ConsumerState<ReflectionScreen> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
+              if (prompt.imageUrl != null && prompt.imageUrl!.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    prompt.imageUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Text(prompt.body),
               const SizedBox(height: 24),
                     Text(

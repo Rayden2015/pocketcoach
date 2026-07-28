@@ -4,6 +4,7 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantStaff;
 use App\Http\Middleware\LogApiHttp;
+use App\Http\Middleware\LogWebHttp;
 use App\Http\Middleware\SyncSentryScope;
 use App\Http\Middleware\UseApiLogChannel;
 use App\Http\Middleware\ValidateTaskBoardWebhookSecret;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AssignRequestId::class,
             UseApiLogChannel::class,
             LogApiHttp::class,
+            LogWebHttp::class,
             SyncSentryScope::class,
         ]);
 
