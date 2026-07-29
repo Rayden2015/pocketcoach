@@ -23,4 +23,30 @@ enum TenantRole: string
             self::Instructor->value,
         ];
     }
+
+    /**
+     * Roles that may manage the space team (invite coaches).
+     *
+     * @return list<string>
+     */
+    public static function ownerOrAdminValues(): array
+    {
+        return [
+            self::Owner->value,
+            self::Admin->value,
+        ];
+    }
+
+    /**
+     * Roles that can be assigned via invite.
+     *
+     * @return list<string>
+     */
+    public static function invitableStaffValues(): array
+    {
+        return [
+            self::Admin->value,
+            self::Instructor->value,
+        ];
+    }
 }

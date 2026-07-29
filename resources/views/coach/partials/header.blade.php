@@ -27,5 +27,12 @@
         <a href="{{ route('coach.learner-submissions.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.learner-submissions.*') ? 'bg-amber-50 font-medium text-amber-950' : 'text-stone-600' }}">Learner submissions</a>
         <a href="{{ route('coach.bookings.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.bookings.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Bookings</a>
         <a href="{{ route('coach.booking.settings', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.booking.settings*') || request()->routeIs('coach.booking.availability.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Booking setup</a>
+        @php
+            $teamMembershipRole = auth()->user()?->memberships()->where('tenant_id', $tenant->id)->value('role');
+            $canManageTeam = in_array($teamMembershipRole, \App\Enums\TenantRole::ownerOrAdminValues(), true);
+        @endphp
+        @if ($canManageTeam)
+            <a href="{{ route('coach.team.index', $tenant) }}" class="rounded-full px-3 py-1.5 hover:bg-stone-100 {{ request()->routeIs('coach.team.*') ? 'bg-teal-50 font-medium text-teal-900' : 'text-stone-600' }}">Team</a>
+        @endif
     </nav>
 </div>

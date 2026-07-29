@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\SpaceGateController;
 use App\Http\Controllers\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Auth\TenantSessionController;
 use App\Http\Controllers\Platform\TenantAdminController;
+use App\Http\Controllers\Web\AcceptSpaceCoachInviteController;
 use App\Http\Controllers\Web\Coach\CoachBookingController;
 use App\Http\Controllers\Web\Coach\CourseController as CoachCourseController;
 use App\Http\Controllers\Web\Coach\LearnerSubmissionController as CoachLearnerSubmissionController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
 use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
 use App\Http\Controllers\Web\Coach\ProgramController as CoachProgramController;
 use App\Http\Controllers\Web\Coach\ReflectionPromptController as CoachReflectionPromptController;
+use App\Http\Controllers\Web\Coach\SpaceTeamController as CoachSpaceTeamController;
 use App\Http\Controllers\Web\CourseSearchController;
 use App\Http\Controllers\Web\CreateSpaceController;
 use App\Http\Controllers\Web\ExtraSpaceController;
@@ -115,6 +117,12 @@ Route::prefix('{tenant:slug}')->group(function (): void {
         ]);
     })->name('booking.mail.result');
 
+    Route::get('/coach-invite/{token}', [AcceptSpaceCoachInviteController::class, 'show'])
+        ->name('space.coach-invite.show');
+    Route::post('/coach-invite/{token}', [AcceptSpaceCoachInviteController::class, 'accept'])
+        ->middleware('throttle:10,1')
+        ->name('space.coach-invite.accept');
+
     Route::middleware('guest')->group(function (): void {
         Route::get('/register', [TenantRegisteredUserController::class, 'create'])->name('space.register');
         Route::post('/register', [TenantRegisteredUserController::class, 'store']);
@@ -193,6 +201,14 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::post('bookings/{booking}/confirm', [CoachBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/decline', [CoachBookingController::class, 'decline'])->name('bookings.decline');
             Route::post('bookings/{booking}/cancel', [CoachBookingController::class, 'cancelCoach'])->name('bookings.cancel');
+
+            Route::middleware('space.owner_or_admin')->group(function (): void {
+                Route::get('team', [CoachSpaceTeamController::class, 'index'])->name('team.index');
+                Route::post('team/invites', [CoachSpaceTeamController::class, 'storeInvite'])->name('team.invites.store');
+                Route::delete('team/invites/{invite}', [CoachSpaceTeamController::class, 'revokeInvite'])->name('team.invites.destroy');
+                Route::put('team/members/{membership}', [CoachSpaceTeamController::class, 'updateMember'])->name('team.members.update');
+                Route::delete('team/members/{membership}', [CoachSpaceTeamController::class, 'removeMember'])->name('team.members.destroy');
+            });
         });
     });
 });
