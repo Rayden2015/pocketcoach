@@ -78,7 +78,55 @@ class LearnWebTest extends TestCase
 
         $this->get("/{$data['tenant']->slug}/learn/courses/{$data['course']->id}")
             ->assertOk()
+            ->assertSee('Enroll free', false)
+            ->assertDontSee('Self-enrollment is not enabled', false);
+    }
+
+    public function test_coach_can_enable_free_enrollment_from_course_edit(): void
+    {
+        $data = $this->seedTenantWithPublishedCourse();
+        $coach = User::factory()->create();
+        TenantMembership::query()->create([
+            'tenant_id' => $data['tenant']->id,
+            'user_id' => $coach->id,
+            'role' => 'owner',
+        ]);
+
+        $this->actingAs($coach)
+            ->put(route('coach.courses.update', [$data['tenant'], $data['course']]), [
+                'program_id' => $data['program']->id,
+                'title' => $data['course']->title,
+                'slug' => $data['course']->slug,
+                'summary' => $data['course']->summary,
+                'sort_order' => $data['course']->sort_order,
+                'is_published' => '1',
+                'is_featured' => '0',
+                'allow_free_enrollment' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('products', [
+            'tenant_id' => $data['tenant']->id,
+            'course_id' => $data['course']->id,
+            'type' => Product::TYPE_FREE,
+            'is_active' => true,
+        ]);
+
+        $learner = User::factory()->create();
+        $this->actingAs($learner)
+            ->get(route('learn.course', [$data['tenant'], $data['course']]))
+            ->assertOk()
             ->assertSee('Enroll free', false);
+
+        $this->actingAs($learner)
+            ->post(route('learn.course.enroll', [$data['tenant'], $data['course']]))
+            ->assertRedirect(route('learn.course', [$data['tenant'], $data['course']]));
+
+        $this->assertDatabaseHas('enrollments', [
+            'user_id' => $learner->id,
+            'course_id' => $data['course']->id,
+            'status' => 'active',
+        ]);
     }
 
     public function test_learner_can_post_free_enroll_and_open_lesson(): void

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
 use App\Models\Tenant;
+use App\Services\FreeProductLookup;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,6 +15,10 @@ use Illuminate\View\View;
 
 class CourseController extends Controller
 {
+    public function __construct(
+        private FreeProductLookup $freeProducts,
+    ) {}
+
     public function index(Request $request, Tenant $tenant): View
     {
         $programId = $request->integer('program_id');
@@ -59,6 +64,7 @@ class CourseController extends Controller
         return view('coach.courses.create', [
             'tenant' => $tenant,
             'program' => $program,
+            'allowsFreeEnrollment' => true,
         ]);
     }
 
@@ -66,6 +72,7 @@ class CourseController extends Controller
     {
         return view('coach.courses.create-standalone', [
             'tenant' => $tenant,
+            'allowsFreeEnrollment' => true,
         ]);
     }
 
@@ -84,6 +91,8 @@ class CourseController extends Controller
             'is_featured' => $request->boolean('is_featured'),
         ]);
 
+        $this->freeProducts->syncCourseFreeOffer($tenant, $course, $request->boolean('allow_free_enrollment'));
+
         return $this->redirectAfterSave($tenant, $course)
             ->with('status', 'Course created.');
     }
@@ -97,6 +106,8 @@ class CourseController extends Controller
             'tenant' => $tenant,
             'course' => $course,
             'programs' => Program::query()->where('tenant_id', $tenant->id)->orderBy('title')->get(),
+            'allowsFreeEnrollment' => $this->freeProducts->courseHasOwnFreeOffer($course)
+                || $this->freeProducts->productIdForCourse($tenant, $course) !== null,
         ]);
     }
 
@@ -120,6 +131,8 @@ class CourseController extends Controller
             'is_featured' => $request->boolean('is_featured'),
         ]);
         $course->save();
+
+        $this->freeProducts->syncCourseFreeOffer($tenant, $course, $request->boolean('allow_free_enrollment'));
 
         return $this->redirectAfterSave($tenant, $course)
             ->with('status', 'Course updated.');
@@ -154,6 +167,7 @@ class CourseController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
+            'allow_free_enrollment' => ['nullable', 'boolean'],
         ]);
 
         $program = null;

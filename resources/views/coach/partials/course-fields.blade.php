@@ -27,6 +27,15 @@
     <input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $c?->is_featured ?? false))>
     Featured course (highlighted in catalog)
 </label>
+<label class="flex items-start gap-2 text-sm text-stone-700">
+    <input type="hidden" name="allow_free_enrollment" value="0">
+    <input type="checkbox" name="allow_free_enrollment" value="1" class="mt-0.5"
+        @checked(old('allow_free_enrollment', $allowsFreeEnrollment ?? true))>
+    <span>
+        <span class="font-medium">Allow free self-enrollment</span>
+        <span class="block text-xs text-stone-500">Learners can click <strong>Enroll free</strong> on the course page — no payment required.</span>
+    </span>
+</label>
 <label class="flex items-center gap-2 text-sm text-stone-700">
     <input type="hidden" name="is_published" value="0">
     <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $c?->is_published ?? false))>

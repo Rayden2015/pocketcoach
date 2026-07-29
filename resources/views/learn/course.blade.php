@@ -36,7 +36,7 @@
                 <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950">
                     <p class="font-semibold">You are not enrolled in this course yet.</p>
                     @if ($freeProductId)
-                        <p class="mt-2 text-amber-900/90">This space offers <strong>free enrollment</strong>. Join to unlock lessons and progress.</p>
+                        <p class="mt-2 text-amber-900/90">This course is free. Enroll here to unlock lessons and track your progress.</p>
                         <form method="POST" action="{{ route('learn.course.enroll', [$tenant, $course]) }}" class="mt-4">
                             @csrf
                             <button type="submit" class="rounded-full bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-stone-800">
@@ -44,9 +44,13 @@
                             </button>
                         </form>
                     @else
-                        <p class="mt-2">There is no self-serve enrollment for this course. Ask your coach or space admin for access.</p>
+                        <p class="mt-2">Self-enrollment is not enabled for this course yet. Ask your coach to turn on <strong>Allow free self-enrollment</strong> when editing the course.</p>
                     @endif
                 </div>
+            @endif
+
+            @if (session('status'))
+                <p class="mt-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">{{ session('status') }}</p>
             @endif
 
             @error('enroll')

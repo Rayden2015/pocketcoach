@@ -28,7 +28,7 @@
             </select>
             <p class="mt-1 text-xs text-stone-500">Leave as single course, or move into a program anytime.</p>
         </div>
-        @include('coach.partials.course-fields', ['course' => $course])
+        @include('coach.partials.course-fields', ['course' => $course, 'allowsFreeEnrollment' => $allowsFreeEnrollment ?? false])
         <button type="submit" class="rounded-full bg-teal-600 px-5 py-2 text-sm font-medium text-white hover:bg-teal-700">Save</button>
     </form>
 @endsection
