@@ -75,7 +75,17 @@ class LearnLessonProgressController extends Controller
             'intent' => ['required', 'in:save_notes,complete,incomplete,next'],
             'content_progress_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'position_seconds' => ['nullable', 'integer', 'min:0'],
+            'return_to' => ['nullable', 'in:studio'],
         ]);
+
+        $stayInStudio = ($validated['return_to'] ?? null) === 'studio';
+        $lessonRoute = static function (Tenant $tenant, Lesson $target) use ($stayInStudio): string {
+            if ($stayInStudio && $target->supportsMediaStudio()) {
+                return 'learn.lesson.studio';
+            }
+
+            return 'learn.lesson';
+        };
 
         $course->load(CourseCurriculumService::eagerLoadPublishedCurriculum());
         $flat = CourseCurriculumService::flattenedPublishedLessons($course);
@@ -110,7 +120,7 @@ class LearnLessonProgressController extends Controller
             LessonProgress::query()->updateOrCreate($attributes, $values);
 
             return redirect()
-                ->route('learn.lesson', [$tenant, $lesson])
+                ->route($lessonRoute($tenant, $lesson), [$tenant, $lesson])
                 ->with('status', 'Saved your notes.');
         }
 
@@ -126,7 +136,7 @@ class LearnLessonProgressController extends Controller
 
         if ($intent === 'next' && $nextLesson !== null) {
             return redirect()
-                ->route('learn.lesson', [$tenant, $nextLesson])
+                ->route($lessonRoute($tenant, $nextLesson), [$tenant, $nextLesson])
                 ->with('status', 'Lesson completed. On to the next one.');
         }
 
@@ -138,7 +148,7 @@ class LearnLessonProgressController extends Controller
         };
 
         return redirect()
-            ->route('learn.lesson', [$tenant, $lesson])
+            ->route($lessonRoute($tenant, $lesson), [$tenant, $lesson])
             ->with('status', $message);
     }
 }

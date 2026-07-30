@@ -142,6 +142,7 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::post('/courses/{course}/enroll', [LearnEnrollmentController::class, 'store'])->name('course.enroll');
             Route::get('/courses/{course}', [LearnCourseController::class, 'show'])->name('course');
             Route::get('/lessons/{lesson}', [LearnLessonController::class, 'show'])->name('lesson');
+            Route::get('/lessons/{lesson}/studio', [LearnLessonController::class, 'studio'])->name('lesson.studio');
             Route::post('/lessons/{lesson}/progress', [LearnLessonProgressController::class, 'update'])->name('lesson.progress');
             Route::get('/reflections/{reflection_prompt}', [LearnReflectionController::class, 'show'])->name('reflections.show');
             Route::post('/reflections/{reflection_prompt}/response', [LearnReflectionController::class, 'updateResponse'])->name('reflections.response');

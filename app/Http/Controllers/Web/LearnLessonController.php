@@ -21,6 +21,46 @@ class LearnLessonController extends Controller
     {
         abort_unless($lesson->tenant_id === $tenant->id, 404);
 
+        $context = $this->lessonContext($tenant, $lesson);
+        if ($context instanceof RedirectResponse) {
+            return $context;
+        }
+
+        return view('learn.lesson', $context);
+    }
+
+    public function studio(Tenant $tenant, Lesson $lesson): View|RedirectResponse
+    {
+        abort_unless($lesson->tenant_id === $tenant->id, 404);
+
+        if (! $lesson->supportsMediaStudio()) {
+            return redirect()
+                ->route('learn.lesson', [$tenant, $lesson])
+                ->with('warning', 'Studio view is available for image, video, audio, and PDF lessons with media.');
+        }
+
+        $context = $this->lessonContext($tenant, $lesson);
+        if ($context instanceof RedirectResponse) {
+            return $context;
+        }
+
+        return view('learn.lesson-studio', $context);
+    }
+
+    /**
+     * @return array{
+     *     tenant: Tenant,
+     *     course: \App\Models\Course,
+     *     lesson: Lesson,
+     *     progress: ?LessonProgress,
+     *     publicPeerNotes: \Illuminate\Support\Collection<int, LessonProgress>,
+     *     prevLesson: ?Lesson,
+     *     nextLesson: ?Lesson,
+     *     completedLessonIds: \Illuminate\Support\Collection<int, int>
+     * }|RedirectResponse
+     */
+    private function lessonContext(Tenant $tenant, Lesson $lesson): array|RedirectResponse
+    {
         $lesson->load(['module.course', 'course']);
         $course = $lesson->module?->course ?? $lesson->course;
         abort_unless($course !== null && $course->tenant_id === $tenant->id, 404);
@@ -63,7 +103,7 @@ class LearnLessonController extends Controller
             ->limit(50)
             ->get();
 
-        return view('learn.lesson', [
+        return [
             'tenant' => $tenant,
             'course' => $course,
             'lesson' => $lesson,
@@ -72,6 +112,6 @@ class LearnLessonController extends Controller
             'prevLesson' => $prevLesson,
             'nextLesson' => $nextLesson,
             'completedLessonIds' => $completedLessonIds,
-        ]);
+        ];
     }
 }

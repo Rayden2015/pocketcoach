@@ -28,6 +28,15 @@ class Lesson extends Model
         self::TYPE_IMAGE,
     ];
 
+    /** Lesson types that use the full-window media studio viewer. */
+    /** @var list<string> */
+    public const STUDIO_TYPES = [
+        self::TYPE_PDF,
+        self::TYPE_VIDEO,
+        self::TYPE_AUDIO,
+        self::TYPE_IMAGE,
+    ];
+
     protected $fillable = [
         'tenant_id',
         'course_id',
@@ -73,6 +82,12 @@ class Lesson extends Model
         }
 
         return null;
+    }
+
+    public function supportsMediaStudio(): bool
+    {
+        return in_array($this->lesson_type, self::STUDIO_TYPES, true)
+            && $this->resolvedMediaUrl() !== null;
     }
 
     /**

@@ -68,37 +68,17 @@
                     <p class="mt-1 text-xs text-stone-500">{{ $course->title }}</p>
                 </div>
                 <div class="p-5 sm:p-6">
-                    @php($mediaUrl = $lesson->resolvedMediaUrl())
-                    @if ($mediaUrl)
-                        <div class="lesson-media">
-                            @switch($lesson->lesson_type)
-                                @case(\App\Models\Lesson::TYPE_VIDEO)
-                                    @if ($embed = \App\Models\Lesson::youtubeEmbedUrl($mediaUrl))
-                                        <div class="aspect-video w-full overflow-hidden rounded-xl bg-stone-900 shadow-inner">
-                                            <iframe src="{{ $embed }}" class="h-full w-full" title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-                                        </div>
-                                    @else
-                                        <video src="{{ $mediaUrl }}" controls class="w-full max-h-[min(70vh,520px)] rounded-xl bg-black shadow-lg" preload="metadata" playsinline controlsList="nodownload"></video>
-                                    @endif
-                                    @break
-                                @case(\App\Models\Lesson::TYPE_AUDIO)
-                                    <div class="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                                        <audio src="{{ $mediaUrl }}" controls class="w-full" preload="metadata"></audio>
-                                    </div>
-                                    @break
-                                @case(\App\Models\Lesson::TYPE_IMAGE)
-                                    <img src="{{ $mediaUrl }}" alt="" class="max-h-[min(70vh,560px)] w-full rounded-xl bg-stone-100 object-contain shadow-sm">
-                                    @break
-                                @case(\App\Models\Lesson::TYPE_PDF)
-                                    <div class="min-h-[28rem] w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-50 shadow-inner sm:min-h-[32rem]">
-                                        <iframe src="{{ $mediaUrl }}" class="h-[28rem] w-full sm:h-[32rem]" title="PDF"></iframe>
-                                    </div>
-                                    @break
-                                @default
-                                    <div class="min-h-[20rem] w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
-                                        <iframe src="{{ $mediaUrl }}" class="h-[20rem] w-full" title="Lesson material" allowfullscreen loading="lazy"></iframe>
-                                    </div>
-                            @endswitch
+                    @include('learn.partials.lesson-media', ['lesson' => $lesson, 'studioMode' => false])
+
+                    @if ($lesson->supportsMediaStudio())
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <a
+                                href="{{ route('learn.lesson.studio', [$tenant, $lesson]) }}"
+                                class="inline-flex items-center gap-2 rounded-full bg-stone-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-stone-800"
+                            >
+                                Open studio
+                                <span class="text-xs font-normal text-stone-300">full window + notes</span>
+                            </a>
                         </div>
                     @endif
 
