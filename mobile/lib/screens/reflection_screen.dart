@@ -5,6 +5,7 @@ import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/engagement_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
+import 'package:pocket_coach_mobile/widgets/zoomable_image_page.dart';
 
 class ReflectionScreen extends ConsumerStatefulWidget {
   const ReflectionScreen({super.key, required this.promptId});
@@ -135,13 +136,43 @@ class _ReflectionScreenState extends ConsumerState<ReflectionScreen> {
               ),
               const SizedBox(height: 16),
               if (prompt.imageUrl != null && prompt.imageUrl!.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    prompt.imageUrl!,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                GestureDetector(
+                  onTap: () => ZoomableImagePage.open(
+                    context,
+                    imageUrl: prompt.imageUrl!,
+                    title: prompt.title,
                   ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Image.network(
+                          prompt.imageUrl!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Material(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(6),
+                              child: Icon(Icons.zoom_out_map, color: Colors.white, size: 18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap image to open fullscreen zoom',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 16),
               ],

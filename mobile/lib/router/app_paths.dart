@@ -12,6 +12,9 @@ abstract final class AppPaths {
   static String catalogCourseLesson(int courseId, int lessonId) =>
       '/catalog/course/$courseId/lesson/$lessonId';
 
+  static String catalogCourseLessonStudio(int courseId, int lessonId) =>
+      '/catalog/course/$courseId/lesson/$lessonId/studio';
+
   /// Lesson URL in the active shell (catalog stack holds course/lesson flows).
   static String courseLessonInCurrentBranch(
     BuildContext context,

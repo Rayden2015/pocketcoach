@@ -8,6 +8,7 @@ import 'package:pocket_coach_mobile/screens/coach_bookings_screen.dart';
 import 'package:pocket_coach_mobile/screens/course_screen.dart';
 import 'package:pocket_coach_mobile/screens/home_screen.dart';
 import 'package:pocket_coach_mobile/screens/lesson_screen.dart';
+import 'package:pocket_coach_mobile/screens/lesson_studio_screen.dart';
 import 'package:pocket_coach_mobile/screens/login_screen.dart';
 import 'package:pocket_coach_mobile/screens/notifications_screen.dart';
 import 'package:pocket_coach_mobile/screens/profile_screen.dart';
@@ -177,6 +178,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                           final lid = int.parse(state.pathParameters['lessonId']!);
                           return LessonScreen(courseId: cid, lessonId: lid);
                         },
+                        routes: [
+                          GoRoute(
+                            path: 'studio',
+                            builder: (context, state) {
+                              final cid = int.parse(state.pathParameters['courseId']!);
+                              final lid = int.parse(state.pathParameters['lessonId']!);
+                              return LessonStudioScreen(courseId: cid, lessonId: lid);
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),

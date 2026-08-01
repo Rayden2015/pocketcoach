@@ -12,6 +12,7 @@ import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
 import 'package:pocket_coach_mobile/router/app_paths.dart';
+import 'package:pocket_coach_mobile/widgets/lesson_media_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
@@ -48,6 +49,18 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant LessonScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lessonId != widget.lessonId) {
+      _notesHydrated = false;
+      _scrollProgress = 0;
+      _lastSentPercent = 0;
+      _notes.clear();
+      _notesPublic = false;
+    }
   }
 
   @override
@@ -313,7 +326,36 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              if (lesson.mediaUrl != null && lesson.mediaUrl!.isNotEmpty) ...[
+              if (lesson.supportsMediaStudio) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 240,
+                    child: LessonMediaView(
+                      lessonType: lesson.lessonType,
+                      mediaUrl: lesson.mediaUrl!,
+                      title: lesson.title,
+                      compact: true,
+                      initialPositionSeconds: lesson.progress?.positionSeconds,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => context.push(
+                    AppPaths.catalogCourseLessonStudio(widget.courseId, widget.lessonId),
+                  ),
+                  icon: const Icon(Icons.fullscreen),
+                  label: const Text('Open studio'),
+                ),
+                Text(
+                  'Full window media with notes beside it',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (lesson.mediaUrl != null && lesson.mediaUrl!.isNotEmpty) ...[
                 FilledButton.tonalIcon(
                   onPressed: () => _openUrl(lesson.mediaUrl!),
                   icon: const Icon(Icons.link),

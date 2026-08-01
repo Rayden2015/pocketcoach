@@ -64,8 +64,25 @@ Log in with a valid user. Set the **space slug** (tenant slug, same as web `/spa
 | **flutter_riverpod** | Session, tenant slug, catalog/course/continue providers |
 | **go_router** | `/splash`, `/login`; shell: `/catalog`, `/learning`, `/profile` + nested course/lesson, notifications, reflection |
 | **flutter_markdown** | Lesson body |
-| **url_launcher** | Opens `media_url` in the browser |
+| **video_player** | In-app video / audio lessons |
+| **webview_flutter** | YouTube embeds + PDF preview |
+| **url_launcher** | Opens external resources when needed |
 
-Screens: **Catalog** (programs → courses), **Continue** (next lesson), **Course** (modules/lessons), **Lesson** (markdown, notes, progress, prev/next).
+Screens: **Catalog**, **Continue**, **Course**, **Lesson** (in-app media preview + notes), **Lesson studio** (full-window media with notes beside / below, fullscreen, image pinch-zoom), **Reflection** (tap image for fullscreen zoom).
 
-API: `GET .../catalog`, `GET .../continue`, `GET .../courses/{id}`, `PUT .../lessons/{id}/progress`.
+API: `GET .../catalog`, `GET .../continue`, `GET .../courses/{id}`, `PUT .../lessons/{id}/progress` (notes, completion, `content_progress_percent`, `position_seconds`).
+
+### Media studio (mobile ↔ web parity)
+
+Image, video, audio, and PDF lessons with a `media_url` show an in-app preview and **Open studio**. Studio route:
+
+`/catalog/course/{courseId}/lesson/{lessonId}/studio`
+
+- Large media stage + notes panel (side-by-side on wide layouts; stacked on phones)
+- Immersive fullscreen toggle
+- Pinch-to-zoom for images
+- Debounced progress including video/audio position
+
+## Deploy to stores
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for Play Store / App Store setup, production `--dart-define` flags, signing, TestFlight rollout, and the release checklist.

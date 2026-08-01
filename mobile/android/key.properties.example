@@ -1,0 +1,11 @@
+# Copy to android/key.properties (gitignored) and fill in after generating your upload keystore.
+#
+#   keytool -genkey -v -keystore pocketcoach-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias pocketcoach
+#
+# storeFile path is relative to android/ (this folder).
+
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=pocketcoach
+storeFile=../pocketcoach-upload.jks

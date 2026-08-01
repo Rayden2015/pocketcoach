@@ -168,4 +168,10 @@ class LessonOutline {
   final String? mediaUrl;
   final Object? meta;
   final LessonProgressSnapshot? progress;
+
+  bool get supportsMediaStudio {
+    const types = {'image', 'video', 'audio', 'pdf'};
+    final url = mediaUrl?.trim();
+    return types.contains(lessonType) && url != null && url.isNotEmpty;
+  }
 }

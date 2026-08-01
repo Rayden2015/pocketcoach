@@ -1,0 +1,151 @@
+name: Mobile Release
+
+# Manual store builds. Configure repository secrets first (see mobile/DEPLOYMENT.md).
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Target platform
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+      api_base_url:
+        description: Production API base URL
+        required: true
+        default: https://pocketcoach.africa/api
+      upload_artifact:
+        description: Upload build artifact to GitHub Actions
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  android-release:
+    name: Android App Bundle
+    if: inputs.platform == 'android' || inputs.platform == 'both'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Decode Android keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Set ANDROID_KEYSTORE_BASE64 repository secret."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/pocketcoach-upload.jks
+          {
+            echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+            echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}"
+            echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}"
+            echo "storeFile=pocketcoach-upload.jks"
+          } > android/key.properties
+
+      - name: Build App Bundle
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          DART_DEFINES="--dart-define=API_BASE_URL=${{ inputs.api_base_url }}"
+          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then
+            DART_DEFINES="$DART_DEFINES --dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"
+          fi
+          flutter build appbundle --release $DART_DEFINES
+
+      - name: Upload AAB artifact
+        if: inputs.upload_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocket-coach-android-release
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
+  ios-release:
+    name: iOS IPA
+    if: inputs.platform == 'ios' || inputs.platform == 'both'
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Import Apple distribution certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.IOS_BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$BUILD_CERTIFICATE_BASE64" ] || [ -z "$BUILD_PROVISION_PROFILE_BASE64" ]; then
+            echo "::error::Set IOS_BUILD_CERTIFICATE_BASE64, IOS_P12_PASSWORD, IOS_PROVISION_PROFILE_BASE64, and IOS_KEYCHAIN_PASSWORD."
+            exit 1
+          fi
+          CERT_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > "$PP_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build IPA
+        env:
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          DART_DEFINES="--dart-define=API_BASE_URL=${{ inputs.api_base_url }}"
+          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then
+            DART_DEFINES="$DART_DEFINES --dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"
+          fi
+          flutter build ipa --release $DART_DEFINES --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload IPA artifact
+        if: inputs.upload_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocket-coach-ios-release
+          path: mobile/build/ios/ipa/*.ipa
+          retention-days: 14
