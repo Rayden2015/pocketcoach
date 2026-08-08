@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\Learner\CatalogController;
 use App\Http\Controllers\Api\V1\Learner\ContinueLearningController;
 use App\Http\Controllers\Api\V1\Learner\LearnerCourseController;
+use App\Http\Controllers\Api\V1\Learner\LearnerCourseReviewController;
 use App\Http\Controllers\Api\V1\Learner\LearnerReflectionController;
 use App\Http\Controllers\Api\V1\Learner\LearningSummaryController;
 use App\Http\Controllers\Api\V1\Learner\LessonProgressController;
@@ -62,6 +63,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/tenants/{tenant}/learning-summary', [LearningSummaryController::class, 'index']);
         Route::post('/tenants/{tenant}/join', [TenantJoinController::class, 'store']);
         Route::get('/tenants/{tenant}/courses/{course}', [LearnerCourseController::class, 'show']);
+        Route::put('/tenants/{tenant}/courses/{course}/review', [LearnerCourseReviewController::class, 'upsert']);
         Route::put('/tenants/{tenant}/lessons/{lesson}/progress', [LessonProgressController::class, 'upsert']);
         Route::get('/tenants/{tenant}/lessons/{lesson}/public-notes', [PeerContentController::class, 'lessonPublicNotes']);
         Route::get('/tenants/{tenant}/lesson-progress/{lessonProgress}/conversation-messages', [ApiSubmissionConversationController::class, 'indexLesson']);

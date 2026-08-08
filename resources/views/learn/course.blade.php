@@ -11,13 +11,30 @@
 
     <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
         <div class="min-w-0">
-            <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-stone-900 to-teal-900 px-6 py-8 text-white shadow-lg sm:px-8">
+            <div class="relative overflow-hidden rounded-2xl shadow-lg">
+                @if ($course->resolvedImageUrl())
+                    <img src="{{ $course->resolvedImageUrl() }}" alt="" class="absolute inset-0 h-full w-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-900/75 to-stone-900/50"></div>
+                @else
+                    <div class="absolute inset-0 bg-gradient-to-br from-stone-900 to-teal-900"></div>
+                @endif
+                <div class="relative px-6 py-8 text-white sm:px-8">
                 @if ($course->program)
                     <p class="text-xs font-semibold uppercase tracking-wider text-teal-200/90">{{ $course->program->title }}</p>
                 @endif
                 <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{{ $course->title }}</h1>
                 @if ($course->summary)
                     <p class="mt-3 max-w-2xl text-sm leading-relaxed text-stone-300">{{ $course->summary }}</p>
+                @endif
+                @if (($reviewsSummary['reviews_count'] ?? 0) > 0)
+                    <div class="mt-4">
+                        @include('learn.partials.course-rating-stars', [
+                            'rating' => $reviewsSummary['average_rating'],
+                            'count' => $reviewsSummary['reviews_count'],
+                            'size' => 'lg',
+                            'class' => 'text-white [&_span:last-child]:text-stone-200',
+                        ])
+                    </div>
                 @endif
                 @if ($canAccess && $lessonsTotal > 0)
                     <div class="mt-6 max-w-md">
@@ -30,6 +47,7 @@
                         </div>
                     </div>
                 @endif
+                </div>
             </div>
 
             @if (! $canAccess)
@@ -56,6 +74,15 @@
             @error('enroll')
                 <p class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ $message }}</p>
             @enderror
+
+            @if ($canAccess)
+                @include('learn.partials.course-review-form', [
+                    'tenant' => $tenant,
+                    'course' => $course,
+                    'myReview' => $myReview,
+                    'reviewsSummary' => $reviewsSummary,
+                ])
+            @endif
 
             <div class="mt-8 lg:hidden">
                 @include('learn.partials.curriculum-tree', [

@@ -11,6 +11,7 @@ use App\Http\Controllers\Platform\TenantAdminController;
 use App\Http\Controllers\Web\AcceptSpaceCoachInviteController;
 use App\Http\Controllers\Web\Coach\CoachBookingController;
 use App\Http\Controllers\Web\Coach\CourseController as CoachCourseController;
+use App\Http\Controllers\Web\Coach\CourseReviewController as CoachCourseReviewController;
 use App\Http\Controllers\Web\Coach\LearnerSubmissionController as CoachLearnerSubmissionController;
 use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
 use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LearnCatalogController;
 use App\Http\Controllers\Web\LearnContinueController;
 use App\Http\Controllers\Web\LearnCourseController;
+use App\Http\Controllers\Web\LearnCourseReviewController;
 use App\Http\Controllers\Web\LearnDashboardController;
 use App\Http\Controllers\Web\LearnEnrollmentController;
 use App\Http\Controllers\Web\LearnLessonController;
@@ -140,6 +142,7 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::get('/catalog', [LearnCatalogController::class, 'index'])->name('catalog');
             Route::get('/continue', [LearnContinueController::class, 'show'])->name('continue');
             Route::post('/courses/{course}/enroll', [LearnEnrollmentController::class, 'store'])->name('course.enroll');
+            Route::post('/courses/{course}/review', [LearnCourseReviewController::class, 'store'])->name('course.review');
             Route::get('/courses/{course}', [LearnCourseController::class, 'show'])->name('course');
             Route::get('/lessons/{lesson}', [LearnLessonController::class, 'show'])->name('lesson');
             Route::get('/lessons/{lesson}/studio', [LearnLessonController::class, 'studio'])->name('lesson.studio');
@@ -188,6 +191,8 @@ Route::prefix('{tenant:slug}')->group(function (): void {
 
             Route::get('learner-submissions', [CoachLearnerSubmissionController::class, 'index'])
                 ->name('learner-submissions.index');
+            Route::get('course-reviews', [CoachCourseReviewController::class, 'index'])
+                ->name('course-reviews.index');
             Route::get('reflections/submissions', function (Tenant $tenant) {
                 return redirect()->route('coach.learner-submissions.index', ['tenant' => $tenant, 'tab' => 'reflections']);
             })->name('reflections.submissions.index');

@@ -61,6 +61,15 @@
 
     @foreach ($programs as $program)
         <section class="mt-8">
+            @if ($program->resolvedImageUrl())
+                <div class="mb-4">
+                    @include('learn.partials.catalog-cover', [
+                        'imageUrl' => $program->resolvedImageUrl(),
+                        'title' => $program->title,
+                        'size' => 'program',
+                    ])
+                </div>
+            @endif
             <h2 class="text-lg font-semibold text-stone-900">
                 {{ $program->title }}
                 @if ($program->is_featured)
@@ -72,8 +81,14 @@
             @endif
             <ul class="mt-4 space-y-2">
                 @foreach ($program->courses as $course)
-                    <li class="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
-                        <div class="flex flex-wrap items-start justify-between gap-3">
+                    <li class="rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
+                        <div class="flex flex-wrap items-start gap-4">
+                            @include('learn.partials.catalog-cover', [
+                                'imageUrl' => $course->resolvedImageUrl(),
+                                'title' => $course->title,
+                                'size' => 'card',
+                            ])
+                            <div class="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <span class="font-medium text-stone-900">{{ $course->title }}</span>
                                 @if ($course->is_featured)
@@ -92,6 +107,7 @@
                             @else
                                 <a href="{{ route('space.login', $tenant) }}" class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Log in to enroll</a>
                             @endauth
+                            </div>
                         </div>
                     </li>
                 @endforeach
@@ -105,8 +121,14 @@
             <p class="mt-1 text-sm text-stone-600">Not grouped in a program.</p>
             <ul class="mt-4 space-y-2">
                 @foreach ($standaloneCourses as $course)
-                    <li class="rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
-                        <div class="flex flex-wrap items-start justify-between gap-3">
+                    <li class="rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
+                        <div class="flex flex-wrap items-start gap-4">
+                            @include('learn.partials.catalog-cover', [
+                                'imageUrl' => $course->resolvedImageUrl(),
+                                'title' => $course->title,
+                                'size' => 'card',
+                            ])
+                            <div class="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <span class="font-medium text-stone-900">{{ $course->title }}</span>
                                 @if ($course->is_featured)
@@ -125,6 +147,7 @@
                             @else
                                 <a href="{{ route('space.login', $tenant) }}" class="shrink-0 text-sm font-medium text-teal-700 hover:underline">Log in to enroll</a>
                             @endauth
+                            </div>
                         </div>
                     </li>
                 @endforeach

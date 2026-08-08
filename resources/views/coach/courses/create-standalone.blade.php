@@ -12,7 +12,7 @@
     <h2 class="text-lg font-semibold">New single course</h2>
     <p class="mt-1 text-sm text-stone-600">This course will not belong to a program. You can add it to a program later from <strong>Edit course</strong>.</p>
 
-    <form method="POST" action="{{ route('coach.courses.store', $tenant) }}" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <form method="POST" action="{{ route('coach.courses.store', $tenant) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
         @csrf
         <input type="hidden" name="program_id" value="">
         @include('coach.partials.course-fields', ['course' => null, 'allowsFreeEnrollment' => $allowsFreeEnrollment ?? true])

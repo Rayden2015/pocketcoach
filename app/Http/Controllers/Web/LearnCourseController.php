@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
 use App\Services\CourseAccessService;
@@ -45,6 +46,17 @@ class LearnCourseController extends Controller
             ? (int) round(100 * $lessonsCompleted / $lessonsTotal)
             : 0;
 
+        $course->loadAvg('reviews', 'rating')->loadCount('reviews');
+        $reviewsSummary = $course->reviewSummaryFromAttributes();
+
+        $myReview = null;
+        if ($canAccess && $user !== null) {
+            $myReview = CourseReview::query()
+                ->where('course_id', $course->id)
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
         return view('learn.course', [
             'tenant' => $tenant,
             'course' => $course,
@@ -54,6 +66,8 @@ class LearnCourseController extends Controller
             'lessonsTotal' => $lessonsTotal,
             'lessonsCompleted' => $lessonsCompleted,
             'courseProgressPercent' => $courseProgressPercent,
+            'reviewsSummary' => $reviewsSummary,
+            'myReview' => $myReview,
         ]);
     }
 }

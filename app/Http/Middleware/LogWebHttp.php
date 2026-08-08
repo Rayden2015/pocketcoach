@@ -116,6 +116,16 @@ class LogWebHttp
             ];
         }
 
+        if ($request->routeIs('learn.course.review') && $request->isMethod('POST')) {
+            $course = $request->route('course');
+
+            return [
+                'course_id' => is_object($course) ? $course->getKey() : $course,
+                'rating' => $request->input('rating'),
+                'has_comment' => $request->filled('comment'),
+            ];
+        }
+
         if ($request->getQueryString() !== '') {
             return ['query' => $request->query()];
         }

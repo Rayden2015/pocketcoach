@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
 use App\Models\Tenant;
+use App\Services\CatalogImageStorage;
 use App\Services\FreeProductLookup;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class CourseController extends Controller
 {
     public function __construct(
         private FreeProductLookup $freeProducts,
+        private CatalogImageStorage $catalogImages,
     ) {}
 
     public function index(Request $request, Tenant $tenant): View
@@ -86,6 +88,7 @@ class CourseController extends Controller
             'title' => $validated['title'],
             'slug' => $this->nextUniqueSlug($tenant->id, $validated['slug'] ?? null, $validated['title'], null),
             'summary' => $validated['summary'] ?? null,
+            'image_disk_path' => $this->catalogImages->storeFromRequest($request, $tenant, 'courses'),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
             'is_featured' => $request->boolean('is_featured'),
@@ -126,6 +129,12 @@ class CourseController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'summary' => $validated['summary'] ?? null,
+            'image_disk_path' => $this->catalogImages->pathAfterUpdate(
+                $request,
+                $tenant,
+                'courses',
+                $course->image_disk_path,
+            ),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
             'is_featured' => $request->boolean('is_featured'),
@@ -168,6 +177,8 @@ class CourseController extends Controller
             'is_published' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
             'allow_free_enrollment' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
+            'remove_image' => ['nullable', 'boolean'],
         ]);
 
         $program = null;

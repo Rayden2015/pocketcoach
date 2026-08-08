@@ -18,6 +18,11 @@
     <textarea id="summary" name="summary" rows="3"
         class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500">{{ old('summary', $p->summary ?? '') }}</textarea>
 </div>
+@include('coach.partials.catalog-image-field', [
+    'model' => $p,
+    'label' => 'Program image',
+    'hint' => 'JPG, PNG, GIF, or WebP — up to 10 MB. Shown on the catalog above courses in this program.',
+])
 <div>
     <label for="sort_order" class="block text-sm font-medium text-stone-700">Sort order</label>
     <input id="sort_order" name="sort_order" type="number" min="0" value="{{ old('sort_order', $p->sort_order ?? 0) }}"

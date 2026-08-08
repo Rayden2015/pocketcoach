@@ -281,6 +281,36 @@ class CoachWebTest extends TestCase
         ])->assertSessionHasErrors('program_id');
     }
 
+    public function test_staff_can_upload_program_and_course_images(): void
+    {
+        Storage::fake('public');
+        ['tenant' => $tenant, 'user' => $user] = $this->staffWithTenant('img');
+        $this->actingAs($user);
+
+        $programImage = UploadedFile::fake()->image('program.jpg', 800, 400);
+        $this->post("/{$tenant->slug}/coach/programs", [
+            'title' => 'Visual program',
+            'is_published' => '1',
+            'image' => $programImage,
+        ])->assertRedirect(route('coach.programs.index', $tenant));
+
+        $program = Program::query()->where('slug', 'visual-program')->firstOrFail();
+        $this->assertNotNull($program->image_disk_path);
+        Storage::disk('public')->assertExists($program->image_disk_path);
+
+        $courseImage = UploadedFile::fake()->image('course.jpg', 600, 400);
+        $this->post("/{$tenant->slug}/coach/courses", [
+            'program_id' => $program->id,
+            'title' => 'Visual course',
+            'is_published' => '1',
+            'image' => $courseImage,
+        ])->assertRedirect(route('coach.courses.index', ['tenant' => $tenant, 'program_id' => $program->id]));
+
+        $course = Course::query()->where('slug', 'visual-course')->firstOrFail();
+        $this->assertNotNull($course->image_disk_path);
+        Storage::disk('public')->assertExists($course->image_disk_path);
+    }
+
     /**
      * @return array{tenant: Tenant, user: User}
      */

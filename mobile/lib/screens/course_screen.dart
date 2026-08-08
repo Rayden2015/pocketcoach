@@ -20,6 +20,65 @@ class CourseScreen extends ConsumerStatefulWidget {
 
 class _CourseScreenState extends ConsumerState<CourseScreen> {
   var _enrolling = false;
+  var _submittingReview = false;
+  int? _selectedRating;
+  final _reviewCommentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewCommentController.dispose();
+    super.dispose();
+  }
+
+  void _syncReviewFields(CourseDetail course) {
+    final mine = course.myReview;
+    if (_selectedRating == null && mine != null) {
+      _selectedRating = mine.rating;
+      if (_reviewCommentController.text.isEmpty && mine.comment != null) {
+        _reviewCommentController.text = mine.comment!;
+      }
+    }
+  }
+
+  Future<void> _submitReview(CourseDetail course) async {
+    final rating = _selectedRating;
+    if (rating == null || _submittingReview) {
+      return;
+    }
+    final token = ref.read(sessionProvider).valueOrNull;
+    if (token == null) {
+      return;
+    }
+    setState(() => _submittingReview = true);
+    try {
+      final slug = ref.read(tenantSlugProvider);
+      await ref.read(apiProvider).upsertCourseReview(
+            bearer: token,
+            tenantSlug: slug,
+            courseId: course.id,
+            rating: rating,
+            comment: _reviewCommentController.text.trim().isEmpty
+                ? null
+                : _reviewCommentController.text.trim(),
+          );
+      ref.invalidate(courseDetailProvider(widget.courseId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(course.myReview == null ? 'Thanks for your review.' : 'Review updated.')),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Could not save review')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _submittingReview = false);
+      }
+    }
+  }
 
   Future<void> _enrollFree(int? productId) async {
     if (productId == null || _enrolling) {
@@ -146,6 +205,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           );
         },
         data: (course) {
+          _syncReviewFields(course);
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
@@ -159,6 +219,60 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                         ),
                   ),
                 ),
+              if (course.reviewsSummary != null && course.reviewsSummary!.reviewsCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    '${course.reviewsSummary!.averageRating?.toStringAsFixed(1) ?? '—'} ★ · ${course.reviewsSummary!.reviewsCount} review${course.reviewsSummary!.reviewsCount == 1 ? '' : 's'}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                ),
+              Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your review', style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (var star = 1; star <= 5; star++)
+                            ChoiceChip(
+                              label: Text('$star ★'),
+                              selected: _selectedRating == star,
+                              onSelected: (selected) {
+                                setState(() => _selectedRating = selected ? star : null);
+                              },
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _reviewCommentController,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Comment (optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _selectedRating == null || _submittingReview
+                            ? null
+                            : () => _submitReview(course),
+                        child: Text(_submittingReview
+                            ? 'Saving…'
+                            : (course.myReview == null ? 'Submit review' : 'Update review')),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               ...course.modules.map((m) => _ModuleSection(module: m, courseId: course.id)),
             ],
           );

@@ -27,7 +27,10 @@ class LearnCatalogController extends Controller
             ->where('tenant_id', $tenant->id)
             ->where('is_published', true)
             ->with([
-                'courses' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
+                'courses' => fn ($q) => $q->where('is_published', true)
+                    ->withAvg('reviews', 'rating')
+                    ->withCount('reviews')
+                    ->orderBy('sort_order'),
             ])
             ->orderBy('sort_order')
             ->get();
@@ -39,6 +42,8 @@ class LearnCatalogController extends Controller
             ->where('tenant_id', $tenant->id)
             ->whereNull('program_id')
             ->where('is_published', true)
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->orderBy('sort_order')
             ->get();
 

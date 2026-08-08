@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Learner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseReview;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Tenant;
@@ -82,12 +83,24 @@ class LearnerCourseController extends Controller
             ]);
         }
 
+        $course->loadAvg('reviews', 'rating')->loadCount('reviews');
+        $reviewsSummary = $course->reviewSummaryFromAttributes();
+        $myReview = CourseReview::query()
+            ->where('course_id', $course->id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
         return response()->json([
             'data' => [
                 'id' => $course->id,
                 'title' => $course->title,
                 'slug' => $course->slug,
                 'summary' => $course->summary,
+                'image_url' => $course->resolvedImageUrl(),
+                'reviews_summary' => $reviewsSummary,
+                'my_review' => $myReview === null
+                    ? null
+                    : LearnerCourseReviewController::serializeReview($myReview),
                 'modules' => $modulesPayload->values()->all(),
             ],
         ]);

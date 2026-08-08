@@ -251,6 +251,30 @@ class PocketCoachApi {
     return CourseDetail.fromJson(data);
   }
 
+  Future<CourseReviewPayload> upsertCourseReview({
+    required String bearer,
+    required String tenantSlug,
+    required int courseId,
+    required int rating,
+    String? comment,
+  }) async {
+    final payload = <String, dynamic>{'rating': rating};
+    if (comment != null) {
+      payload['comment'] = comment;
+    }
+    final res = await _client.put(
+      _u('/v1/tenants/$tenantSlug/courses/$courseId/review'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode(payload),
+    );
+    final map = _decodeObjectOrThrow(res);
+    final data = map['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(res.statusCode, res.body, message: 'Invalid review payload');
+    }
+    return CourseReviewPayload.fromJson(data);
+  }
+
   Future<ContinueLearningPayload?> fetchContinue({
     required String bearer,
     required String tenantSlug,

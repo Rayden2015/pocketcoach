@@ -27,6 +27,8 @@ class PublicCatalogController extends Controller
             ->with([
                 'courses' => function ($q): void {
                     $q->where('is_published', true)
+                        ->withAvg('reviews', 'rating')
+                        ->withCount('reviews')
                         ->orderByDesc('is_featured')
                         ->orderByDesc('catalog_view_count')
                         ->orderBy('sort_order');
@@ -43,6 +45,8 @@ class PublicCatalogController extends Controller
             ->where('tenant_id', $tenant->id)
             ->whereNull('program_id')
             ->where('is_published', true)
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->when(
                 $catalogSettings['show_featured_first'],
                 fn ($q) => $q->orderByDesc('is_featured'),

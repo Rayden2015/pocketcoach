@@ -47,6 +47,15 @@
 
     @foreach ($programs as $program)
         <section class="mb-10">
+            @if ($program->resolvedImageUrl())
+                <div class="mb-4">
+                    @include('learn.partials.catalog-cover', [
+                        'imageUrl' => $program->resolvedImageUrl(),
+                        'title' => $program->title,
+                        'size' => 'program',
+                    ])
+                </div>
+            @endif
             <h2 class="text-lg font-semibold text-stone-900">{{ $program->title }}</h2>
             @if ($program->summary)
                 <p class="mt-1 text-sm text-stone-600">{{ $program->summary }}</p>
@@ -56,7 +65,13 @@
                     @php($meta = $courseMeta[$course->id] ?? ['is_enrolled' => false, 'free_product_id' => null])
                     <li>
                         <a href="{{ route('learn.course', [$tenant, $course]) }}"
-                            class="flex flex-col rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-teal-300 hover:shadow">
+                            class="flex gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-sm transition hover:border-teal-300 hover:shadow">
+                            @include('learn.partials.catalog-cover', [
+                                'imageUrl' => $course->resolvedImageUrl(),
+                                'title' => $course->title,
+                                'size' => 'card',
+                            ])
+                            <span class="min-w-0 flex-1 flex flex-col">
                             <span class="flex flex-wrap items-center gap-2">
                                 <span class="font-medium text-stone-900">{{ $course->title }}</span>
                                 @if ($meta['is_enrolled'])
@@ -70,7 +85,17 @@
                             @if ($course->summary)
                                 <span class="mt-0.5 text-sm text-stone-600">{{ $course->summary }}</span>
                             @endif
+                            @php($reviewStats = $course->reviewSummaryFromAttributes())
+                            @if ($reviewStats['reviews_count'] > 0)
+                                <span class="mt-1 block">
+                                    @include('learn.partials.course-rating-stars', [
+                                        'rating' => $reviewStats['average_rating'],
+                                        'count' => $reviewStats['reviews_count'],
+                                    ])
+                                </span>
+                            @endif
                             <span class="mt-1 text-xs text-stone-500">Open the course page to enroll or start lessons.</span>
+                            </span>
                         </a>
                     </li>
                 @endforeach
@@ -87,7 +112,13 @@
                     @php($meta = $courseMeta[$course->id] ?? ['is_enrolled' => false, 'free_product_id' => null])
                     <li>
                         <a href="{{ route('learn.course', [$tenant, $course]) }}"
-                            class="flex flex-col rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-teal-300 hover:shadow">
+                            class="flex gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-sm transition hover:border-teal-300 hover:shadow">
+                            @include('learn.partials.catalog-cover', [
+                                'imageUrl' => $course->resolvedImageUrl(),
+                                'title' => $course->title,
+                                'size' => 'card',
+                            ])
+                            <span class="min-w-0 flex-1 flex flex-col">
                             <span class="flex flex-wrap items-center gap-2">
                                 <span class="font-medium text-stone-900">{{ $course->title }}</span>
                                 @if ($meta['is_enrolled'])
@@ -101,7 +132,17 @@
                             @if ($course->summary)
                                 <span class="mt-0.5 text-sm text-stone-600">{{ $course->summary }}</span>
                             @endif
+                            @php($reviewStats = $course->reviewSummaryFromAttributes())
+                            @if ($reviewStats['reviews_count'] > 0)
+                                <span class="mt-1 block">
+                                    @include('learn.partials.course-rating-stars', [
+                                        'rating' => $reviewStats['average_rating'],
+                                        'count' => $reviewStats['reviews_count'],
+                                    ])
+                                </span>
+                            @endif
                             <span class="mt-1 text-xs text-stone-500">Open the course page to enroll or start lessons.</span>
+                            </span>
                         </a>
                     </li>
                 @endforeach

@@ -171,6 +171,18 @@ class CatalogScreen extends ConsumerWidget {
                         clipBehavior: Clip.antiAlias,
                         child: ExpansionTile(
                           key: PageStorageKey<int>(program.id),
+                          leading: program.imageUrl != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    program.imageUrl!,
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(Icons.school_outlined),
+                                  ),
+                                )
+                              : null,
                           title: Text(program.title),
                           subtitle: program.summary != null && program.summary!.isNotEmpty
                               ? Text(
@@ -188,6 +200,18 @@ class CatalogScreen extends ConsumerWidget {
                             else
                               for (final course in program.courses)
                                 ListTile(
+                                  leading: course.imageUrl != null
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.network(
+                                            course.imageUrl!,
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.menu_book_outlined),
+                                          ),
+                                        )
+                                      : const Icon(Icons.menu_book_outlined),
                                   title: Text(course.title),
                                   subtitle: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -78,6 +79,26 @@ class LearnerApiTest extends TestCase
             ->assertJsonPath('data.0.slug', 'p')
             ->assertJsonPath('data.0.courses.0.is_enrolled', false)
             ->assertJsonPath('data.0.courses.0.free_product_id', null);
+    }
+
+    public function test_catalog_includes_image_urls_when_set(): void
+    {
+        Storage::fake('public');
+        $data = $this->seedTenantWithCourse();
+        $programPath = 'catalog/'.$data['tenant']->id.'/programs/test.jpg';
+        $coursePath = 'catalog/'.$data['tenant']->id.'/courses/test.jpg';
+        Storage::disk('public')->put($programPath, 'program');
+        Storage::disk('public')->put($coursePath, 'course');
+        $data['program']->update(['image_disk_path' => $programPath]);
+        $data['course']->update(['image_disk_path' => $coursePath]);
+
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson("/api/v1/tenants/{$data['tenant']->slug}/catalog");
+        $response->assertOk()
+            ->assertJsonPath('data.0.image_url', Storage::disk('public')->url($programPath))
+            ->assertJsonPath('data.0.courses.0.image_url', Storage::disk('public')->url($coursePath));
     }
 
     public function test_catalog_appends_standalone_courses_bucket(): void

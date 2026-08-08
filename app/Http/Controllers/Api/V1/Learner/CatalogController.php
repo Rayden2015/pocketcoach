@@ -27,19 +27,26 @@ class CatalogController extends Controller
             ->where('tenant_id', $tenant->id)
             ->where('is_published', true)
             ->with([
-                'courses' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
+                'courses' => fn ($q) => $q->where('is_published', true)
+                    ->withAvg('reviews', 'rating')
+                    ->withCount('reviews')
+                    ->orderBy('sort_order'),
             ])
             ->orderBy('sort_order')
             ->get();
 
         $mapCourse = function ($c) use ($accessibleIds, $freeProducts, $tenant) {
             $freeId = $freeProducts->productIdForCourse($tenant, $c);
+            $summary = $c->reviewSummaryFromAttributes();
 
             return [
                 'id' => $c->id,
                 'title' => $c->title,
                 'slug' => $c->slug,
                 'summary' => $c->summary,
+                'image_url' => $c->resolvedImageUrl(),
+                'average_rating' => $summary['average_rating'],
+                'reviews_count' => $summary['reviews_count'],
                 'is_enrolled' => $accessibleIds->has($c->id),
                 'free_product_id' => $freeId,
             ];
@@ -50,6 +57,7 @@ class CatalogController extends Controller
             'title' => $p->title,
             'slug' => $p->slug,
             'summary' => $p->summary,
+            'image_url' => $p->resolvedImageUrl(),
             'courses' => $p->courses->map($mapCourse),
         ]);
 
@@ -57,6 +65,8 @@ class CatalogController extends Controller
             ->where('tenant_id', $tenant->id)
             ->whereNull('program_id')
             ->where('is_published', true)
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->orderBy('sort_order')
             ->get();
 

@@ -4,6 +4,9 @@ class CourseDetail {
     required this.title,
     required this.slug,
     this.summary,
+    this.imageUrl,
+    this.reviewsSummary,
+    this.myReview,
     required this.modules,
   });
 
@@ -19,11 +22,18 @@ class CourseDetail {
     }
     final idRaw = j['id'];
     final cid = idRaw is int ? idRaw : (idRaw is num ? idRaw.toInt() : int.parse(idRaw.toString()));
+    final summaryRaw = j['reviews_summary'];
+    final myRaw = j['my_review'];
     return CourseDetail(
       id: cid,
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
+      imageUrl: j['image_url'] as String?,
+      reviewsSummary: summaryRaw is Map<String, dynamic>
+          ? CourseReviewsSummary.fromJson(summaryRaw)
+          : null,
+      myReview: myRaw is Map<String, dynamic> ? CourseReviewPayload.fromJson(myRaw) : null,
       modules: modules,
     );
   }
@@ -32,6 +42,9 @@ class CourseDetail {
   final String title;
   final String slug;
   final String? summary;
+  final String? imageUrl;
+  final CourseReviewsSummary? reviewsSummary;
+  final CourseReviewPayload? myReview;
   final List<ModuleOutline> modules;
 
   /// First lesson in module order, or null if none.
@@ -174,4 +187,42 @@ class LessonOutline {
     final url = mediaUrl?.trim();
     return types.contains(lessonType) && url != null && url.isNotEmpty;
   }
+}
+
+class CourseReviewsSummary {
+  const CourseReviewsSummary({this.averageRating, this.reviewsCount = 0});
+
+  factory CourseReviewsSummary.fromJson(Map<String, dynamic> j) {
+    final avg = j['average_rating'];
+    return CourseReviewsSummary(
+      averageRating: avg is num ? avg.toDouble() : double.tryParse('$avg'),
+      reviewsCount: j['reviews_count'] is int
+          ? j['reviews_count'] as int
+          : (j['reviews_count'] is num ? (j['reviews_count'] as num).toInt() : 0),
+    );
+  }
+
+  final double? averageRating;
+  final int reviewsCount;
+}
+
+class CourseReviewPayload {
+  const CourseReviewPayload({
+    required this.rating,
+    this.comment,
+  });
+
+  factory CourseReviewPayload.fromJson(Map<String, dynamic> j) {
+    final ratingRaw = j['rating'];
+    final rating = ratingRaw is int
+        ? ratingRaw
+        : (ratingRaw is num ? ratingRaw.toInt() : int.parse('$ratingRaw'));
+    return CourseReviewPayload(
+      rating: rating,
+      comment: j['comment'] as String?,
+    );
+  }
+
+  final int rating;
+  final String? comment;
 }

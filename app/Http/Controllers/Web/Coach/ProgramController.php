@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Coach;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
 use App\Models\Tenant;
+use App\Services\CatalogImageStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,6 +14,10 @@ use Illuminate\View\View;
 
 class ProgramController extends Controller
 {
+    public function __construct(
+        private CatalogImageStorage $catalogImages,
+    ) {}
+
     public function index(Tenant $tenant): View
     {
         $programs = Program::query()
@@ -45,6 +50,7 @@ class ProgramController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
         ]);
 
         $slug = ! empty($validated['slug'] ?? null)
@@ -56,6 +62,7 @@ class ProgramController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'summary' => $validated['summary'] ?? null,
+            'image_disk_path' => $this->catalogImages->storeFromRequest($request, $tenant, 'programs'),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
             'is_featured' => $request->boolean('is_featured'),
@@ -94,12 +101,20 @@ class ProgramController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,gif,webp', 'max:10240'],
+            'remove_image' => ['nullable', 'boolean'],
         ]);
 
         $program->fill([
             'title' => $validated['title'],
             'slug' => $validated['slug'],
             'summary' => $validated['summary'] ?? null,
+            'image_disk_path' => $this->catalogImages->pathAfterUpdate(
+                $request,
+                $tenant,
+                'programs',
+                $program->image_disk_path,
+            ),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_published' => $request->boolean('is_published'),
             'is_featured' => $request->boolean('is_featured'),

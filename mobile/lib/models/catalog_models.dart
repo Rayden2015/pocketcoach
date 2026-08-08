@@ -4,6 +4,7 @@ class CatalogProgram {
     required this.title,
     required this.slug,
     this.summary,
+    this.imageUrl,
     required this.courses,
   });
 
@@ -24,6 +25,7 @@ class CatalogProgram {
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
+      imageUrl: j['image_url'] as String?,
       courses: courses,
     );
   }
@@ -32,6 +34,7 @@ class CatalogProgram {
   final String title;
   final String slug;
   final String? summary;
+  final String? imageUrl;
   final List<CatalogCourse> courses;
 }
 
@@ -41,6 +44,7 @@ class CatalogCourse {
     required this.title,
     required this.slug,
     this.summary,
+    this.imageUrl,
     this.isEnrolled = false,
     this.freeProductId,
   });
@@ -60,6 +64,7 @@ class CatalogCourse {
       title: j['title'] as String,
       slug: j['slug'] as String,
       summary: j['summary'] as String?,
+      imageUrl: j['image_url'] as String?,
       isEnrolled: j['is_enrolled'] as bool? ?? false,
       freeProductId: freeId,
     );
@@ -69,6 +74,7 @@ class CatalogCourse {
   final String title;
   final String slug;
   final String? summary;
+  final String? imageUrl;
   final bool isEnrolled;
   final int? freeProductId;
 
