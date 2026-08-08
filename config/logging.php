@@ -7,15 +7,19 @@ use Monolog\Processor\PsrLogMessageProcessor;
 
 /*
 |--------------------------------------------------------------------------
-| Environment tag for log filenames (daily + emergency paths)
+| Application + environment tags for log filenames (daily + emergency paths)
 |--------------------------------------------------------------------------
-| Daily files look like: laravel-local-2026-04-06.log, laravel-production-2026-04-06.log
-| API-only traffic (see UseApiLogChannel middleware): api-local-2026-04-06.log
+| Daily files look like: pocketcoach-local-2026-04-06.log, pocketcoach-production-2026-04-06.log
+| API-only traffic (see UseApiLogChannel middleware): pocketcoach-api-local-2026-04-06.log
+| Slug comes from APP_NAME (e.g. "PocketCoach" → pocketcoach).
 */
+$logAppSlug = preg_replace('/[^a-z0-9._-]+/i', '-', strtolower((string) env('APP_NAME', 'app')));
+$logAppSlug = trim($logAppSlug, '-');
+$logAppSlug = $logAppSlug !== '' ? $logAppSlug : 'app';
 $logEnvTag = preg_replace('/[^a-z0-9._-]+/i', '-', strtolower((string) env('APP_ENV', 'production')));
 $logEnvTag = $logEnvTag !== '' ? $logEnvTag : 'production';
-$dailyLogPath = storage_path('logs/laravel-'.$logEnvTag.'.log');
-$apiDailyLogPath = storage_path('logs/api-'.$logEnvTag.'.log');
+$dailyLogPath = storage_path('logs/'.$logAppSlug.'-'.$logEnvTag.'.log');
+$apiDailyLogPath = storage_path('logs/'.$logAppSlug.'-api-'.$logEnvTag.'.log');
 
 return [
 
@@ -54,7 +58,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | When true, each /api/* request writes one "API HTTP" line to the api
-    | daily log (storage/logs/api-{APP_ENV}-YYYY-MM-DD.log). Set LOG_API_HTTP
+    | daily log (storage/logs/{APP_NAME-slug}-api-{APP_ENV}-YYYY-MM-DD.log). Set LOG_API_HTTP
     | in .env, or leave unset to mirror APP_DEBUG for local troubleshooting.
     |
     */
@@ -78,6 +82,14 @@ return [
         env('LOG_WEB_HTTP', env('APP_ENV') === 'production' ? true : env('APP_DEBUG', false)),
         FILTER_VALIDATE_BOOLEAN
     ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log filename slug (derived from APP_NAME)
+    |--------------------------------------------------------------------------
+    */
+
+    'app_slug' => $logAppSlug,
 
     /*
     |--------------------------------------------------------------------------
@@ -118,7 +130,7 @@ return [
 
         /*
         | Used as the default channel for routes under /api/* (middleware: UseApiLogChannel).
-        | Filenames: api-{APP_ENV}-YYYY-MM-DD.log
+        | Filenames: {APP_NAME-slug}-api-{APP_ENV}-YYYY-MM-DD.log
         */
         'api' => [
             'driver' => 'daily',
@@ -179,7 +191,7 @@ return [
         ],
 
         'emergency' => [
-            'path' => storage_path('logs/laravel-'.$logEnvTag.'-emergency.log'),
+            'path' => storage_path('logs/'.$logAppSlug.'-'.$logEnvTag.'-emergency.log'),
         ],
 
     ],

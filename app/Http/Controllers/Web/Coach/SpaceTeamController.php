@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\SpaceCoachInviteNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -87,6 +88,19 @@ class SpaceTeamController extends Controller
         ]);
         $invite->load(['tenant', 'invitedBy']);
 
+        Log::info('space_invite.created', [
+            'invite_id' => $invite->id,
+            'tenant_id' => $tenant->id,
+            'tenant_slug' => $tenant->slug,
+            'email' => $email,
+            'role' => $role,
+            'invited_by_user_id' => $request->user()->id,
+            'expires_at' => $invite->expires_at->toIso8601String(),
+            'notification' => SpaceCoachInviteNotification::class,
+            'notification_queued' => true,
+            'queue_connection' => config('queue.default'),
+        ]);
+
         Notification::route('mail', $email)
             ->notify(new SpaceCoachInviteNotification($invite));
 
@@ -101,6 +115,14 @@ class SpaceTeamController extends Controller
         abort_unless($invite->accepted_at === null, 404);
 
         $invite->delete();
+
+        Log::info('space_invite.revoked', [
+            'invite_id' => $invite->id,
+            'tenant_id' => $tenant->id,
+            'tenant_slug' => $tenant->slug,
+            'email' => $invite->email,
+            'role' => $invite->role,
+        ]);
 
         return redirect()
             ->route('coach.team.index', $tenant)

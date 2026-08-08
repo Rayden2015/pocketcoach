@@ -32,6 +32,13 @@
                     @elseif ($prompt->scheduled_publish_at && ! $prompt->is_published)
                         <span class="ml-2 text-xs text-stone-500">{{ $prompt->scheduled_publish_at->timezone(config('app.timezone'))->format('M j, Y g:i A') }}</span>
                     @endif
+                    @if ($prompt->is_published)
+                        <p class="mt-1 text-xs text-stone-500">
+                            <span class="tabular-nums">{{ $prompt->views_count }}</span> {{ $prompt->views_count === 1 ? 'view' : 'views' }}
+                            ·
+                            <span class="tabular-nums">{{ $prompt->responses_count }}</span> {{ $prompt->responses_count === 1 ? 'response' : 'responses' }}
+                        </p>
+                    @endif
                 </div>
                 <a href="{{ route('coach.reflections.edit', [$tenant, $prompt]) }}" class="text-sm text-teal-700 hover:underline">Edit</a>
             </li>

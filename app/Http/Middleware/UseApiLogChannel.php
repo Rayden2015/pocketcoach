@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Route HTTP /api/* application logging to the dedicated "api" daily channel
- * (see config/logging.php — files like api-{APP_ENV}-YYYY-MM-DD.log).
+ * (see config/logging.php — files like {APP_NAME-slug}-api-{APP_ENV}-YYYY-MM-DD.log).
  */
 class UseApiLogChannel
 {

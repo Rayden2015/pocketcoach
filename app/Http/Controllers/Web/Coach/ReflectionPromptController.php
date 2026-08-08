@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Coach;
 
 use App\Http\Controllers\Controller;
 use App\Models\ReflectionPrompt;
+use App\Models\ReflectionPromptView;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,7 @@ class ReflectionPromptController extends Controller
     {
         $prompts = ReflectionPrompt::query()
             ->where('tenant_id', $tenant->id)
+            ->withCount(['views', 'responses'])
             ->orderByRaw('COALESCE(published_at, scheduled_publish_at) DESC')
             ->orderByDesc('id')
             ->get();
@@ -95,11 +97,28 @@ class ReflectionPromptController extends Controller
             $reflection->scheduled_publish_at?->copy()->timezone($tz)->format('H:i') ?? '07:00',
         );
 
+        $viewers = collect();
+        $respondedUserIds = collect();
+        if ($reflection->is_published) {
+            $viewers = ReflectionPromptView::query()
+                ->where('reflection_prompt_id', $reflection->id)
+                ->with('user:id,name,email')
+                ->get()
+                ->sortBy(fn (ReflectionPromptView $view) => strtolower($view->user?->name ?? $view->user?->email ?? ''))
+                ->values();
+
+            $respondedUserIds = $reflection->responses()
+                ->whereNotNull('first_submitted_at')
+                ->pluck('user_id');
+        }
+
         return view('coach.reflections.edit', [
             'tenant' => $tenant,
             'prompt' => $reflection,
             'defaultScheduleDate' => $defaultScheduleDate,
             'defaultScheduleTime' => $defaultScheduleTime,
+            'viewers' => $viewers,
+            'respondedUserIds' => $respondedUserIds,
         ]);
     }
 

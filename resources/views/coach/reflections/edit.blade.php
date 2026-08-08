@@ -10,6 +10,33 @@
     </div>
 
     @if ($prompt->is_published)
+        <section class="mb-6 rounded-2xl border border-stone-200 bg-stone-50 px-5 py-4 shadow-sm">
+            <h2 class="text-sm font-semibold text-stone-900">Learner engagement</h2>
+            <p class="mt-2 text-sm text-stone-700">
+                <span class="tabular-nums font-medium">{{ $viewers->count() }}</span> {{ $viewers->count() === 1 ? 'learner viewed' : 'learners viewed' }}
+                ·
+                <span class="tabular-nums font-medium">{{ $respondedUserIds->count() }}</span> {{ $respondedUserIds->count() === 1 ? 'response' : 'responses' }}
+            </p>
+            @if ($viewers->isNotEmpty())
+                <p class="mt-3 text-xs font-medium uppercase tracking-wide text-stone-500">Viewed by</p>
+                <ul class="mt-2 flex flex-wrap gap-2">
+                    @foreach ($viewers as $view)
+                        @php($viewer = $view->user)
+                        <li class="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs text-stone-800">
+                            {{ $viewer?->name ?? $viewer?->email ?? 'Learner' }}
+                            @if ($viewer && $respondedUserIds->contains($viewer->id))
+                                <span class="ml-1 text-teal-700">· responded</span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="mt-2 text-sm text-stone-600">No views recorded yet.</p>
+            @endif
+        </section>
+    @endif
+
+    @if ($prompt->is_published)
         <form method="POST" action="{{ route('coach.reflections.update', [$tenant, $prompt]) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
             @csrf
             @method('PUT')

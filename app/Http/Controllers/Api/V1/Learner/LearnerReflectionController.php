@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 class LearnerReflectionController extends Controller
 {
-    public function latest(Tenant $tenant): JsonResponse
+    public function latest(Request $request, Tenant $tenant): JsonResponse
     {
         abort_unless(TenantEngagementSettings::reflections($tenant)['enabled'], 404);
 
@@ -30,7 +30,22 @@ class LearnerReflectionController extends Controller
             return response()->json(['data' => null]);
         }
 
-        return response()->json(['data' => $this->serializePrompt($prompt)]);
+        $data = $this->serializePrompt($prompt);
+        $user = $request->user();
+        if ($user !== null) {
+            $mine = ReflectionResponse::query()
+                ->where('reflection_prompt_id', $prompt->id)
+                ->where('user_id', $user->id)
+                ->first();
+            $data['my_response'] = $mine === null ? null : [
+                'body' => $mine->body,
+                'is_public' => $mine->is_public,
+                'first_submitted_at' => $mine->first_submitted_at?->toIso8601String(),
+                'updated_at' => $mine->updated_at?->toIso8601String(),
+            ];
+        }
+
+        return response()->json(['data' => $data]);
     }
 
     public function show(Request $request, Tenant $tenant, ReflectionPrompt $reflection_prompt): JsonResponse

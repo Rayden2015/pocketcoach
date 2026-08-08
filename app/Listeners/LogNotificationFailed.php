@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Support\NotificationLog;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Log;
 
@@ -14,8 +15,7 @@ class LogNotificationFailed
         Log::warning('notification.failed', [
             'notification' => $notification,
             'channel' => $event->channel,
-            'notifiable_type' => $event->notifiable::class,
-            'notifiable_id' => $event->notifiable->getKey(),
+            'notifiable' => NotificationLog::notifiableSummary($event->notifiable),
             'data' => $this->safeData($event->data),
         ]);
     }

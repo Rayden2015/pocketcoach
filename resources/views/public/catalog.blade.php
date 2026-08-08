@@ -47,18 +47,12 @@
     </div>
 
     @if ($reflectionsEnabled && $latestReflection)
-        <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4">
-            <p class="text-xs font-medium uppercase tracking-wide text-amber-900">Today&rsquo;s reflection</p>
-            @if ($latestReflection->title)
-                <p class="mt-1 font-semibold text-stone-900">{{ $latestReflection->title }}</p>
-            @endif
-            <p class="mt-2 text-sm text-stone-700">{{ Str::limit(strip_tags($latestReflection->body), 240) }}</p>
-            @auth
-                <a href="{{ route('learn.reflections.show', [$tenant, $latestReflection]) }}"
-                    class="mt-3 inline-flex rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800">Open reflection</a>
-            @else
-                <p class="mt-2 text-xs text-stone-600">Log in to respond to the coach&rsquo;s prompt.</p>
-            @endauth
+        <div class="mt-8">
+            @include('learn.partials.todays-reflection', [
+                'tenant' => $tenant,
+                'prompt' => $latestReflection,
+                'guest' => ! auth()->check(),
+            ])
         </div>
     @endif
 

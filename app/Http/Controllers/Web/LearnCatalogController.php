@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Program;
+use App\Models\ReflectionResponse;
 use App\Models\Tenant;
 use App\Services\CourseAccessService;
 use App\Services\FreeProductLookup;
+use App\Services\LatestReflectionPromptService;
+use App\Services\TenantEngagementSettings;
 use Illuminate\View\View;
 
 class LearnCatalogController extends Controller
@@ -15,6 +18,7 @@ class LearnCatalogController extends Controller
     public function __construct(
         private CourseAccessService $access,
         private FreeProductLookup $freeProducts,
+        private LatestReflectionPromptService $latestReflection,
     ) {}
 
     public function index(Tenant $tenant): View
@@ -54,11 +58,24 @@ class LearnCatalogController extends Controller
             ];
         }
 
+        $reflectionCfg = TenantEngagementSettings::reflections($tenant);
+        $latestReflection = $this->latestReflection->forTenant($tenant);
+        $latestReflectionHasResponse = false;
+        if ($latestReflection !== null && $user !== null) {
+            $latestReflectionHasResponse = ReflectionResponse::query()
+                ->where('reflection_prompt_id', $latestReflection->id)
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+
         return view('learn.catalog', [
             'tenant' => $tenant,
             'programs' => $programs,
             'standaloneCourses' => $standaloneCourses,
             'courseMeta' => $courseMeta,
+            'reflectionsEnabled' => $reflectionCfg['enabled'],
+            'latestReflection' => $latestReflection,
+            'latestReflectionHasResponse' => $latestReflectionHasResponse,
         ]);
     }
 }

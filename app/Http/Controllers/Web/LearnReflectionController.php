@@ -26,11 +26,6 @@ class LearnReflectionController extends Controller
 
         $this->touchPromptView($reflection_prompt, $user);
 
-        $viewRow = ReflectionPromptView::query()
-            ->where('reflection_prompt_id', $reflection_prompt->id)
-            ->where('user_id', $user->id)
-            ->first();
-
         $responseRow = ReflectionResponse::query()
             ->where('reflection_prompt_id', $reflection_prompt->id)
             ->where('user_id', $user->id)
@@ -51,7 +46,6 @@ class LearnReflectionController extends Controller
         return view('learn.reflection', [
             'tenant' => $tenant,
             'prompt' => $reflection_prompt,
-            'viewRow' => $viewRow,
             'responseRow' => $responseRow,
             'publicPeerResponses' => $publicPeerResponses,
         ]);

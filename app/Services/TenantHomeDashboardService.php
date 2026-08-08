@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\TenantRole;
 use App\Models\LessonProgress;
 use App\Models\ReflectionPrompt;
+use App\Models\ReflectionResponse;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -16,6 +17,7 @@ final class TenantHomeDashboardService
         private CourseAccessService $access,
         private ContinueLearningService $continueLearning,
         private CoachSpaceSnapshotBuilder $coachSnapshots,
+        private LatestReflectionPromptService $latestReflection,
     ) {}
 
     /**
@@ -119,6 +121,15 @@ final class TenantHomeDashboardService
             ];
         }
 
+        $reflectionPrompt = $this->latestReflection->forTenant($tenant);
+        $reflectionHasResponse = false;
+        if ($reflectionPrompt !== null) {
+            $reflectionHasResponse = ReflectionResponse::query()
+                ->where('reflection_prompt_id', $reflectionPrompt->id)
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+
         return [
             'lessons_completed_7d' => $lessonsCompleted7d,
             'lessons_completed_30d' => $lessonsCompleted30d,
@@ -127,6 +138,9 @@ final class TenantHomeDashboardService
             'courses_in_progress' => $coursesInProgress,
             'courses_not_started' => $coursesNotStarted,
             'continue' => $continuePayload,
+            'reflections_enabled' => TenantEngagementSettings::reflections($tenant)['enabled'],
+            'latest_reflection' => $reflectionPrompt,
+            'latest_reflection_has_response' => $reflectionHasResponse,
         ];
     }
 

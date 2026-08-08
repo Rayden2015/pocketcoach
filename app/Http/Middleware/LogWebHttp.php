@@ -101,6 +101,21 @@ class LogWebHttp
             ];
         }
 
+        if ($request->routeIs('coach.team.invites.store') && $request->isMethod('POST')) {
+            return [
+                'email' => $request->input('email'),
+                'role' => $request->input('role'),
+            ];
+        }
+
+        if ($request->routeIs('coach.team.invites.destroy') && $request->isMethod('DELETE')) {
+            $invite = $request->route('invite');
+
+            return [
+                'invite_id' => is_object($invite) ? $invite->getKey() : $invite,
+            ];
+        }
+
         if ($request->getQueryString() !== '') {
             return ['query' => $request->query()];
         }

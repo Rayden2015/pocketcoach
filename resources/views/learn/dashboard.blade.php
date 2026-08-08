@@ -20,6 +20,16 @@
         </div>
     </div>
 
+    @if (($learner['reflections_enabled'] ?? false) && ! empty($learner['latest_reflection']))
+        <div class="mb-8">
+            @include('learn.partials.todays-reflection', [
+                'tenant' => $tenant,
+                'prompt' => $learner['latest_reflection'],
+                'hasResponse' => $learner['latest_reflection_has_response'] ?? false,
+            ])
+        </div>
+    @endif
+
     @if ($m && ($m['is_staff'] ?? false))
         <div class="mb-8 rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50 to-white px-5 py-5 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">

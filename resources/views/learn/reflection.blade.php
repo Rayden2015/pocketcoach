@@ -32,16 +32,7 @@
         </div>
     </article>
 
-    <div class="mt-8 grid gap-6 md:grid-cols-2">
-        <section class="rounded-xl border border-stone-200 bg-stone-50 p-4 text-sm">
-            <h2 class="font-semibold text-stone-900">Your view log</h2>
-            @if ($viewRow)
-                <p class="mt-2 text-stone-700">First opened: <time datetime="{{ $viewRow->first_viewed_at?->toIso8601String() }}">{{ $viewRow->first_viewed_at?->format('Y-m-d H:i') }}</time></p>
-                <p class="text-stone-700">Last opened: <time datetime="{{ $viewRow->last_viewed_at?->toIso8601String() }}">{{ $viewRow->last_viewed_at?->format('Y-m-d H:i') }}</time></p>
-            @else
-                <p class="mt-2 text-stone-600">Open this page to record your first view.</p>
-            @endif
-        </section>
+    <div class="mt-8">
         <section class="rounded-xl border border-stone-200 bg-white p-4">
             <h2 class="text-sm font-semibold text-stone-900">Your reflection</h2>
             <form method="POST" action="{{ route('learn.reflections.response', [$tenant, $prompt]) }}" class="mt-3 space-y-3">

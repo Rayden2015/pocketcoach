@@ -30,6 +30,16 @@
         @endif
     @endauth
 
+    @if ($reflectionsEnabled && $latestReflection)
+        <div class="mb-8">
+            @include('learn.partials.todays-reflection', [
+                'tenant' => $tenant,
+                'prompt' => $latestReflection,
+                'hasResponse' => $latestReflectionHasResponse ?? false,
+            ])
+        </div>
+    @endif
+
     <div class="mb-8 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 shadow-sm">
         <p><strong>Enrolling in a course:</strong> open a course below, then use <strong>Enroll free</strong> on the course page when the coach has added a free enrollment offer for that course or program. If you do not see that button, ask your coach to enable free access or to enroll you manually.</p>
         <p class="mt-2 text-xs text-stone-500">Programs group courses. Some courses may sit <strong>outside any program</strong>. Enrollment is at the <strong>course</strong> level (or whole-program when a product is scoped to the program).</p>

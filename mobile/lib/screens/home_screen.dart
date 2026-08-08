@@ -399,8 +399,10 @@ class _ReflectionPromptHomeCard extends ConsumerWidget {
           color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.35),
           child: ListTile(
             leading: Icon(Icons.edit_note, color: Theme.of(context).colorScheme.primary),
-            title: Text(prompt.title),
-            subtitle: const Text('Reflection — respond in the app'),
+            title: Text(prompt.title.isNotEmpty ? prompt.title : 'Today\'s reflection'),
+            subtitle: Text(
+              prompt.myResponse == null ? 'Today\'s reflection — tap to respond' : 'View your reflection',
+            ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/home/reflection/${prompt.id}'),
           ),
