@@ -80,25 +80,35 @@ final class TenantHomeDashboardService
         $coursesInProgress = 0;
         $coursesNotStarted = 0;
 
-        foreach ($courseIds as $cid) {
-            $lessonIds = CourseCurriculumService::publishedLessonIdsForCourse((int) $cid);
-            $total = $lessonIds->count();
-            if ($total === 0) {
-                continue;
-            }
-            $completed = LessonProgress::query()
-                ->where('user_id', $user->id)
-                ->where('tenant_id', $tenant->id)
-                ->whereIn('lesson_id', $lessonIds)
-                ->whereNotNull('completed_at')
-                ->count();
+        if ($courseIds !== []) {
+            $lessonsByCourse = CourseCurriculumService::publishedLessonIdsGroupedByCourse($courseIds);
+            $allLessonIds = $lessonsByCourse->flatten()->unique()->values();
 
-            if ($completed >= $total) {
-                $coursesCompleted++;
-            } elseif ($completed > 0) {
-                $coursesInProgress++;
-            } else {
-                $coursesNotStarted++;
+            $completedByLesson = $allLessonIds->isEmpty()
+                ? collect()
+                : LessonProgress::query()
+                    ->where('user_id', $user->id)
+                    ->where('tenant_id', $tenant->id)
+                    ->whereIn('lesson_id', $allLessonIds)
+                    ->whereNotNull('completed_at')
+                    ->pluck('lesson_id')
+                    ->flip();
+
+            foreach ($courseIds as $cid) {
+                $lessonIds = $lessonsByCourse->get((int) $cid, collect());
+                $total = $lessonIds->count();
+                if ($total === 0) {
+                    continue;
+                }
+                $completed = $lessonIds->filter(fn ($lid) => $completedByLesson->has($lid))->count();
+
+                if ($completed >= $total) {
+                    $coursesCompleted++;
+                } elseif ($completed > 0) {
+                    $coursesInProgress++;
+                } else {
+                    $coursesNotStarted++;
+                }
             }
         }
 

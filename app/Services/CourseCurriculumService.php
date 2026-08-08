@@ -69,4 +69,26 @@ final class CourseCurriculumService
             })
             ->pluck('id');
     }
+
+    /**
+     * @param  list<int>  $courseIds
+     * @return Collection<int, Collection<int, int>>
+     */
+    public static function publishedLessonIdsGroupedByCourse(array $courseIds): Collection
+    {
+        if ($courseIds === []) {
+            return collect();
+        }
+
+        return Lesson::query()
+            ->whereIn('course_id', $courseIds)
+            ->where('is_published', true)
+            ->where(function ($q): void {
+                $q->whereNull('module_id')
+                    ->orWhereHas('module', fn ($m) => $m->where('is_published', true));
+            })
+            ->get(['id', 'course_id'])
+            ->groupBy('course_id')
+            ->map(fn ($lessons) => $lessons->pluck('id'));
+    }
 }

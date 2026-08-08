@@ -111,6 +111,7 @@ class ModuleOutline {
 
 class LessonProgressSnapshot {
   LessonProgressSnapshot({
+    this.id,
     this.completedAt,
     this.notes,
     this.notesIsPublic = false,
@@ -122,7 +123,15 @@ class LessonProgressSnapshot {
     final ps = j['position_seconds'];
     final cpp = j['content_progress_percent'];
     final nip = j['notes_is_public'];
+    final idRaw = j['id'];
+    int? id;
+    if (idRaw is int) {
+      id = idRaw;
+    } else if (idRaw is num) {
+      id = idRaw.toInt();
+    }
     return LessonProgressSnapshot(
+      id: id,
       completedAt: j['completed_at'] as String?,
       notes: j['notes'] as String?,
       notesIsPublic: nip is bool ? nip : (nip == true),
@@ -131,6 +140,7 @@ class LessonProgressSnapshot {
     );
   }
 
+  final int? id;
   final String? completedAt;
   final String? notes;
   final bool notesIsPublic;

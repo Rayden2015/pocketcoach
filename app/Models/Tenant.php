@@ -123,4 +123,12 @@ class Tenant extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    /**
+     * @return HasMany<SpaceAnnouncement, $this>
+     */
+    public function spaceAnnouncements(): HasMany
+    {
+        return $this->hasMany(SpaceAnnouncement::class);
+    }
 }

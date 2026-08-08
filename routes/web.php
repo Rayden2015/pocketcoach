@@ -17,11 +17,13 @@ use App\Http\Controllers\Web\Coach\LessonController as CoachLessonController;
 use App\Http\Controllers\Web\Coach\ModuleController as CoachModuleController;
 use App\Http\Controllers\Web\Coach\ProgramController as CoachProgramController;
 use App\Http\Controllers\Web\Coach\ReflectionPromptController as CoachReflectionPromptController;
+use App\Http\Controllers\Web\Coach\SpaceAnnouncementController as CoachSpaceAnnouncementController;
 use App\Http\Controllers\Web\Coach\SpaceTeamController as CoachSpaceTeamController;
 use App\Http\Controllers\Web\CourseSearchController;
 use App\Http\Controllers\Web\CreateSpaceController;
 use App\Http\Controllers\Web\ExtraSpaceController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\LearnAnnouncementController;
 use App\Http\Controllers\Web\LearnCatalogController;
 use App\Http\Controllers\Web\LearnContinueController;
 use App\Http\Controllers\Web\LearnCourseController;
@@ -90,7 +92,15 @@ Route::middleware('auth')->group(function (): void {
 | Reserved slugs: config/tenancy.reserved_slugs
 */
 Route::prefix('{tenant:slug}')->group(function (): void {
-    Route::get('/', function (Tenant $tenant) {
+    Route::middleware('signed')->group(function (): void {
+        Route::get('/coach/bookings/{booking}/respond/confirm', [SignedCoachBookingMailController::class, 'confirm'])
+            ->name('mail.booking.confirm');
+        Route::get('/coach/bookings/{booking}/respond/decline', [SignedCoachBookingMailController::class, 'decline'])
+            ->name('mail.booking.decline');
+    });
+
+    Route::middleware('tenant.active')->group(function (): void {
+        Route::get('/', function (Tenant $tenant) {
         if (auth()->check()) {
             return redirect()->route('learn.dashboard', $tenant);
         }
@@ -105,14 +115,7 @@ Route::prefix('{tenant:slug}')->group(function (): void {
         ->middleware('throttle:bookings')
         ->name('public.book.store');
 
-    Route::middleware('signed')->group(function (): void {
-        Route::get('/coach/bookings/{booking}/respond/confirm', [SignedCoachBookingMailController::class, 'confirm'])
-            ->name('mail.booking.confirm');
-        Route::get('/coach/bookings/{booking}/respond/decline', [SignedCoachBookingMailController::class, 'decline'])
-            ->name('mail.booking.decline');
-    });
-
-    Route::get('/booking/responded', function (Tenant $tenant) {
+        Route::get('/booking/responded', function (Tenant $tenant) {
         return view('booking-mail-result', [
             'tenant' => $tenant,
             'outcome' => request()->query('outcome', 'none'),
@@ -149,6 +152,8 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             Route::post('/lessons/{lesson}/progress', [LearnLessonProgressController::class, 'update'])->name('lesson.progress');
             Route::get('/reflections/{reflection_prompt}', [LearnReflectionController::class, 'show'])->name('reflections.show');
             Route::post('/reflections/{reflection_prompt}/response', [LearnReflectionController::class, 'updateResponse'])->name('reflections.response');
+            Route::get('/announcements', [LearnAnnouncementController::class, 'index'])->name('announcements.index');
+            Route::get('/announcements/{announcement}', [LearnAnnouncementController::class, 'show'])->name('announcements.show');
         });
 
         Route::get('/submission-conversations/reflection/{reflectionResponse}', [SubmissionConversationController::class, 'showReflection'])
@@ -198,6 +203,14 @@ Route::prefix('{tenant:slug}')->group(function (): void {
             })->name('reflections.submissions.index');
             Route::resource('reflections', CoachReflectionPromptController::class);
 
+            Route::get('announcements', [CoachSpaceAnnouncementController::class, 'index'])->name('announcements.index');
+            Route::get('announcements/create', [CoachSpaceAnnouncementController::class, 'create'])->name('announcements.create');
+            Route::post('announcements', [CoachSpaceAnnouncementController::class, 'store'])->name('announcements.store');
+            Route::get('announcements/{announcement}/edit', [CoachSpaceAnnouncementController::class, 'edit'])->name('announcements.edit');
+            Route::put('announcements/{announcement}', [CoachSpaceAnnouncementController::class, 'update'])->name('announcements.update');
+            Route::post('announcements/{announcement}/publish', [CoachSpaceAnnouncementController::class, 'publish'])->name('announcements.publish');
+            Route::delete('announcements/{announcement}', [CoachSpaceAnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
             Route::get('bookings', [CoachBookingController::class, 'index'])->name('bookings.index');
             Route::get('booking/settings', [CoachBookingController::class, 'editSettings'])->name('booking.settings');
             Route::put('booking/settings', [CoachBookingController::class, 'updateSettings'])->name('booking.settings.update');
@@ -216,5 +229,6 @@ Route::prefix('{tenant:slug}')->group(function (): void {
                 Route::delete('team/members/{membership}', [CoachSpaceTeamController::class, 'removeMember'])->name('team.members.destroy');
             });
         });
+    });
     });
 });

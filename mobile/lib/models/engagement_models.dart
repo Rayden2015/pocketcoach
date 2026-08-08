@@ -82,18 +82,28 @@ class ReflectionPrompt {
 
 class ReflectionMyResponse {
   ReflectionMyResponse({
+    this.id,
     required this.body,
     this.isPublic = false,
   });
 
   factory ReflectionMyResponse.fromJson(Map<String, dynamic> j) {
     final ip = j['is_public'];
+    final idRaw = j['id'];
+    int? id;
+    if (idRaw is int) {
+      id = idRaw;
+    } else if (idRaw is num) {
+      id = idRaw.toInt();
+    }
     return ReflectionMyResponse(
+      id: id,
       body: j['body'] as String? ?? '',
       isPublic: ip is bool ? ip : (ip == true),
     );
   }
 
+  final int? id;
   final String body;
   final bool isPublic;
 }

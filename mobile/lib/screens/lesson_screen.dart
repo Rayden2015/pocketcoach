@@ -12,7 +12,7 @@ import 'package:pocket_coach_mobile/providers/learning_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
 import 'package:pocket_coach_mobile/router/app_paths.dart';
-import 'package:pocket_coach_mobile/widgets/lesson_media_view.dart';
+import 'package:pocket_coach_mobile/screens/submission_conversation_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
@@ -414,6 +414,29 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                   child: const Text('Save notes'),
                 ),
               ),
+              if (lesson.progress?.id != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _saving
+                        ? null
+                        : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => SubmissionConversationScreen(
+                                  kind: SubmissionConversationKind.lesson,
+                                  subjectId: lesson.progress!.id!,
+                                  title: 'Lesson conversation',
+                                ),
+                              ),
+                            );
+                          },
+                    icon: const Icon(Icons.forum_outlined),
+                    label: const Text('Coach conversation'),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

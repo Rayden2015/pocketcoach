@@ -5,7 +5,7 @@ import 'package:pocket_coach_mobile/providers/api_provider.dart';
 import 'package:pocket_coach_mobile/providers/engagement_providers.dart';
 import 'package:pocket_coach_mobile/providers/session_provider.dart';
 import 'package:pocket_coach_mobile/providers/tenant_slug_provider.dart';
-import 'package:pocket_coach_mobile/widgets/zoomable_image_page.dart';
+import 'package:pocket_coach_mobile/screens/submission_conversation_screen.dart';
 
 class ReflectionScreen extends ConsumerStatefulWidget {
   const ReflectionScreen({super.key, required this.promptId});
@@ -68,6 +68,7 @@ class _ReflectionScreenState extends ConsumerState<ReflectionScreen> {
           );
       if (mounted) {
         ref.invalidate(reflectionLatestProvider);
+        ref.invalidate(reflectionPromptProvider(widget.promptId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Reflection saved')),
         );
@@ -198,6 +199,23 @@ class _ReflectionScreenState extends ConsumerState<ReflectionScreen> {
                 value: _isPublic,
                 onChanged: (v) => setState(() => _isPublic = v),
               ),
+              const SizedBox(height: 12),
+              if (prompt.myResponse?.id != null)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SubmissionConversationScreen(
+                          kind: SubmissionConversationKind.reflection,
+                          subjectId: prompt.myResponse!.id!,
+                          title: 'Reflection conversation',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.forum_outlined),
+                  label: const Text('Coach conversation'),
+                ),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _saving || token == null || token.isEmpty

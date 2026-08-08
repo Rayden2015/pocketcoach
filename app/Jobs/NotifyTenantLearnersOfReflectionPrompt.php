@@ -2,10 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Enums\TenantRole;
 use App\Models\ReflectionPrompt;
-use App\Models\User;
 use App\Notifications\ReflectionPromptPublishedNotification;
+use App\Services\TenantLearnerAudienceService;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Notification;
 
@@ -22,7 +21,7 @@ class NotifyTenantLearnersOfReflectionPrompt
         public int $reflectionPromptId,
     ) {}
 
-    public function handle(): void
+    public function handle(TenantLearnerAudienceService $audience): void
     {
         $prompt = ReflectionPrompt::query()
             ->whereKey($this->reflectionPromptId)
@@ -33,13 +32,7 @@ class NotifyTenantLearnersOfReflectionPrompt
             return;
         }
 
-        $tenantId = $prompt->tenant_id;
-
-        User::query()
-            ->whereHas('memberships', function ($q) use ($tenantId): void {
-                $q->where('tenant_id', $tenantId)
-                    ->where('role', TenantRole::Learner->value);
-            })
+        $audience->queryForTenant($prompt->tenant_id)
             ->chunkById(100, function ($users) use ($prompt): void {
                 Notification::send($users, new ReflectionPromptPublishedNotification($prompt));
             });

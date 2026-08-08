@@ -38,6 +38,7 @@ class LearnerReflectionController extends Controller
                 ->where('user_id', $user->id)
                 ->first();
             $data['my_response'] = $mine === null ? null : [
+                'id' => $mine->id,
                 'body' => $mine->body,
                 'is_public' => $mine->is_public,
                 'first_submitted_at' => $mine->first_submitted_at?->toIso8601String(),
@@ -62,6 +63,7 @@ class LearnerReflectionController extends Controller
                 ->where('user_id', $user->id)
                 ->first();
             $data['my_response'] = $mine === null ? null : [
+                'id' => $mine->id,
                 'body' => $mine->body,
                 'is_public' => $mine->is_public,
                 'first_submitted_at' => $mine->first_submitted_at?->toIso8601String(),
@@ -122,6 +124,7 @@ class LearnerReflectionController extends Controller
 
         return response()->json([
             'data' => [
+                'id' => $response->id,
                 'body' => $response->body,
                 'is_public' => $response->is_public,
                 'first_submitted_at' => $response->first_submitted_at?->toIso8601String(),

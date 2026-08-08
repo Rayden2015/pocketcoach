@@ -7,10 +7,12 @@ use App\Contracts\TaskBoard\TaskBoardGateway;
 use App\Listeners\LogNotificationFailed;
 use App\Listeners\LogNotificationSent;
 use App\Listeners\LogQueueJobFailed;
+use App\Listeners\SendFcmPushOnNotification;
 use App\Models\Booking;
 use App\Models\LessonProgress;
 use App\Models\ReflectionPrompt;
 use App\Models\ReflectionResponse;
+use App\Models\SpaceAnnouncement;
 use App\Models\Tenant;
 use App\Observers\ReflectionPromptObserver;
 use App\Services\Payments\PaystackClient;
@@ -83,6 +85,7 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(NotificationFailed::class, LogNotificationFailed::class);
         Event::listen(NotificationSent::class, LogNotificationSent::class);
+        Event::listen(NotificationSent::class, SendFcmPushOnNotification::class);
         Event::listen(JobFailed::class, LogQueueJobFailed::class);
 
         ReflectionPrompt::observe(ReflectionPromptObserver::class);
@@ -95,7 +98,6 @@ class AppServiceProvider extends ServiceProvider
 
             return Tenant::query()
                 ->where('slug', $slug)
-                ->where('status', Tenant::STATUS_ACTIVE)
                 ->firstOrFail();
         });
 
@@ -140,6 +142,18 @@ class AppServiceProvider extends ServiceProvider
             return ReflectionResponse::query()
                 ->whereKey($value)
                 ->whereHas('reflectionPrompt', fn ($q) => $q->where('tenant_id', $tenant->id))
+                ->firstOrFail();
+        });
+
+        Route::bind('announcement', function (string $value, \Illuminate\Routing\Route $route): SpaceAnnouncement {
+            $tenant = $route->parameter('tenant');
+            if (! $tenant instanceof Tenant) {
+                abort(404);
+            }
+
+            return SpaceAnnouncement::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereKey($value)
                 ->firstOrFail();
         });
 

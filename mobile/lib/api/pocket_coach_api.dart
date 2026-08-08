@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:pocket_coach_mobile/config/api_config.dart';
 import 'package:pocket_coach_mobile/models/booking_models.dart';
 import 'package:pocket_coach_mobile/models/catalog_models.dart';
+import 'package:pocket_coach_mobile/models/conversation_models.dart';
 import 'package:pocket_coach_mobile/models/continue_learning.dart';
 import 'package:pocket_coach_mobile/models/course_detail.dart';
 import 'package:pocket_coach_mobile/models/engagement_models.dart';
@@ -672,6 +673,95 @@ class PocketCoachApi {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw _exceptionFromResponse(res);
     }
+  }
+
+  Future<void> registerDeviceToken({
+    required String bearer,
+    required String token,
+    String platform = 'unknown',
+  }) async {
+    final res = await _client.post(
+      _u('/v1/device-tokens'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode({'token': token, 'platform': platform}),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw _exceptionFromResponse(res);
+    }
+  }
+
+  Future<List<ConversationMessage>> fetchReflectionConversation({
+    required String bearer,
+    required String tenantSlug,
+    required int reflectionResponseId,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/reflection-responses/$reflectionResponseId/conversation-messages'),
+      headers: _jsonHeaders(bearer),
+    );
+    return _decodeConversationList(res);
+  }
+
+  Future<ConversationMessage> postReflectionConversationMessage({
+    required String bearer,
+    required String tenantSlug,
+    required int reflectionResponseId,
+    required String body,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/reflection-responses/$reflectionResponseId/conversation-messages'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode({'body': body}),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(res.statusCode, res.body, message: 'Invalid message payload');
+    }
+    return ConversationMessage.fromJson(data);
+  }
+
+  Future<List<ConversationMessage>> fetchLessonConversation({
+    required String bearer,
+    required String tenantSlug,
+    required int lessonProgressId,
+  }) async {
+    final res = await _client.get(
+      _u('/v1/tenants/$tenantSlug/lesson-progress/$lessonProgressId/conversation-messages'),
+      headers: _jsonHeaders(bearer),
+    );
+    return _decodeConversationList(res);
+  }
+
+  Future<ConversationMessage> postLessonConversationMessage({
+    required String bearer,
+    required String tenantSlug,
+    required int lessonProgressId,
+    required String body,
+  }) async {
+    final res = await _client.post(
+      _u('/v1/tenants/$tenantSlug/lesson-progress/$lessonProgressId/conversation-messages'),
+      headers: _jsonHeaders(bearer),
+      body: jsonEncode({'body': body}),
+    );
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ApiException(res.statusCode, res.body, message: 'Invalid message payload');
+    }
+    return ConversationMessage.fromJson(data);
+  }
+
+  List<ConversationMessage> _decodeConversationList(http.Response res) {
+    final map = _decodeObject(res);
+    final data = map['data'];
+    if (data is! List) {
+      return [];
+    }
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(ConversationMessage.fromJson)
+        .toList();
   }
 
   void close() => _client.close();

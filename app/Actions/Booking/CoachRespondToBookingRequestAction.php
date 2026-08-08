@@ -5,12 +5,14 @@ namespace App\Actions\Booking;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\Booking\BookingSlotService;
+use App\Services\BookingBookerNotifier;
 use Illuminate\Support\Facades\Log;
 
 final class CoachRespondToBookingRequestAction
 {
     public function __construct(
         private BookingSlotService $slots,
+        private BookingBookerNotifier $bookerNotifier,
     ) {}
 
     /**
@@ -51,6 +53,8 @@ final class CoachRespondToBookingRequestAction
             'coach_user_id' => $booking->coach_user_id,
         ]);
 
+        $this->bookerNotifier->confirmed($booking->fresh(['tenant', 'coach', 'booker']));
+
         return ['ok' => true];
     }
 
@@ -81,6 +85,8 @@ final class CoachRespondToBookingRequestAction
             'tenant_id' => $booking->tenant_id,
             'coach_user_id' => $booking->coach_user_id,
         ]);
+
+        $this->bookerNotifier->declined($booking->fresh(['tenant', 'coach', 'booker']));
 
         return ['ok' => true];
     }

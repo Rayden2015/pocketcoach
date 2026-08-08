@@ -56,6 +56,7 @@ class LearnerCourseController extends Controller
                 'media_url' => $l->resolvedMediaUrl(),
                 'meta' => $l->meta,
                 'progress' => $pr === null ? null : [
+                    'id' => $pr->id,
                     'completed_at' => $pr->completed_at?->toIso8601String(),
                     'notes' => $pr->notes,
                     'notes_is_public' => $pr->notes_is_public,

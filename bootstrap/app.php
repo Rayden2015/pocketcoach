@@ -3,6 +3,7 @@
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureSpaceOwnerOrAdmin;
+use App\Http\Middleware\EnsureTenantActive;
 use App\Http\Middleware\EnsureTenantStaff;
 use App\Http\Middleware\LogApiHttp;
 use App\Http\Middleware\LogWebHttp;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn () => route('my-coaching'));
 
         $middleware->alias([
+            'tenant.active' => EnsureTenantActive::class,
             'tenant.staff' => EnsureTenantStaff::class,
             'space.owner_or_admin' => EnsureSpaceOwnerOrAdmin::class,
             'super_admin' => EnsureSuperAdmin::class,

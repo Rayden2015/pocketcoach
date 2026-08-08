@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Notifications\NewBookingRequestNotification;
 use App\Services\Booking\BookingSlotService;
+use App\Services\BookingBookerNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,14 +17,11 @@ class BookingPublicApiController extends Controller
     public function __construct(
         private BookingSlotService $slots,
         private SubmitBookingRequestAction $submitBooking,
+        private BookingBookerNotifier $bookerNotifier,
     ) {}
 
     public function coaches(Tenant $tenant): JsonResponse
     {
-        if (! $tenant->isActive()) {
-            return response()->json(['message' => 'Space not available.'], 404);
-        }
-
         $coaches = $this->slots->bookableCoaches($tenant);
 
         return response()->json([
@@ -37,10 +35,6 @@ class BookingPublicApiController extends Controller
 
     public function slots(Request $request, Tenant $tenant): JsonResponse
     {
-        if (! $tenant->isActive()) {
-            return response()->json(['message' => 'Space not available.'], 404);
-        }
-
         $validated = $request->validate([
             'coach_user_id' => ['required', 'integer'],
             'from' => ['nullable', 'string'],
@@ -65,10 +59,6 @@ class BookingPublicApiController extends Controller
 
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
-        if (! $tenant->isActive()) {
-            return response()->json(['message' => 'Space not available.'], 404);
-        }
-
         $guestRules = $request->user() === null ? [
             'guest_name' => ['required', 'string', 'max:255'],
             'guest_email' => ['required', 'email', 'max:255'],
@@ -122,6 +112,7 @@ class BookingPublicApiController extends Controller
         if ($booking->coach) {
             $booking->coach->notify(new NewBookingRequestNotification($booking));
         }
+        $this->bookerNotifier->requestReceived($booking);
 
         return response()->json([
             'data' => [

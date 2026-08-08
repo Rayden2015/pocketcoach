@@ -13,10 +13,6 @@ class TenantBrandingController extends Controller
 {
     public function show(Tenant $tenant): JsonResponse
     {
-        if (! $tenant->isActive()) {
-            return response()->json(['message' => 'Space not available.'], 404);
-        }
-
         return response()->json([
             'data' => [
                 'name' => $tenant->name,

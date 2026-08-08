@@ -98,4 +98,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(CoachBookingSetting::class, 'coach_user_id');
     }
+
+    /**
+     * @return HasMany<DeviceToken, $this>
+     */
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }

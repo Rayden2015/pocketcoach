@@ -7,6 +7,7 @@ use App\Enums\TenantRole;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Notifications\NewBookingRequestNotification;
+use App\Services\BookingBookerNotifier;
 use App\Services\Booking\BookingSlotService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,7 @@ class PublicBookingController extends Controller
     public function __construct(
         private BookingSlotService $slots,
         private SubmitBookingRequestAction $submitBooking,
+        private BookingBookerNotifier $bookerNotifier,
     ) {}
 
     public function show(Request $request, Tenant $tenant): View
@@ -104,6 +106,7 @@ class PublicBookingController extends Controller
         if ($booking->coach) {
             $booking->coach->notify(new NewBookingRequestNotification($booking));
         }
+        $this->bookerNotifier->requestReceived($booking);
 
         return redirect()
             ->to($tenant->publicUrl('book?coach='.(int) $validated['coach_user_id']))

@@ -81,6 +81,7 @@ class LessonProgressController extends Controller
 
         return response()->json([
             'data' => [
+                'id' => $progress->id,
                 'lesson_id' => $progress->lesson_id,
                 'completed_at' => $progress->completed_at?->toIso8601String(),
                 'notes' => $progress->notes,

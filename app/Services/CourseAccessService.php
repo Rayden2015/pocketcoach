@@ -49,15 +49,23 @@ class CourseAccessService
             ->get(['course_id', 'program_id']);
 
         $ids = collect();
+        $programIds = collect();
+
         foreach ($enrollments as $enrollment) {
             if ($enrollment->course_id !== null) {
                 $ids->push((int) $enrollment->course_id);
             }
             if ($enrollment->program_id !== null) {
-                $ids = $ids->merge(
-                    Course::query()->where('program_id', $enrollment->program_id)->pluck('id'),
-                );
+                $programIds->push((int) $enrollment->program_id);
             }
+        }
+
+        if ($programIds->isNotEmpty()) {
+            $ids = $ids->merge(
+                Course::query()
+                    ->whereIn('program_id', $programIds->unique()->values())
+                    ->pluck('id'),
+            );
         }
 
         return $ids->unique()->values()->all();
