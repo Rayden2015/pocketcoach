@@ -208,8 +208,28 @@ function initBrowserNotifications() {
     );
 }
 
+function initUserMenu() {
+    const root = document.getElementById('pc-user-menu');
+    if (!root || root.tagName !== 'DETAILS') {
+        return;
+    }
+
+    document.addEventListener('click', (e) => {
+        if (root.open && !root.contains(e.target)) {
+            root.open = false;
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && root.open) {
+            root.open = false;
+        }
+    });
+}
+
 function initAppScripts() {
     initNotificationsBell();
+    initUserMenu();
     initLearnLesson();
     initBrowserNotifications();
 }

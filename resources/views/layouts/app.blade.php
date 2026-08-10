@@ -19,10 +19,10 @@
                 {{ config('app.name') }}
             </a>
             @auth
-                <form method="GET" action="{{ route('search.courses') }}" class="order-3 flex min-w-0 flex-1 basis-full items-center gap-2 sm:order-none sm:basis-[14rem] md:basis-72">
-                    <input type="search" name="q" value="{{ request()->routeIs('search.*') ? request('q') : '' }}" placeholder="Search your courses…" autocomplete="off"
-                        class="pc-ring-focus min-w-0 flex-1 rounded-full border border-slate-200/90 bg-white/90 px-4 py-2 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-[color-mix(in_srgb,var(--pc-accent)_45%,#cbd5e1)]">
-                    <button type="submit" class="pc-btn-primary shrink-0 rounded-full px-4 py-2 text-xs font-semibold shadow-sm sm:text-sm">Search</button>
+                <form method="GET" action="{{ route('search.courses') }}" role="search" class="order-3 min-w-0 flex-1 basis-full sm:order-none sm:basis-[14rem] md:basis-72">
+                    <label for="pc-header-search" class="sr-only">Search your courses</label>
+                    <input id="pc-header-search" type="search" name="q" value="{{ request()->routeIs('search.*') ? request('q') : '' }}" placeholder="Search your courses…" autocomplete="off"
+                        class="pc-ring-focus w-full rounded-full border border-slate-200/90 bg-white/90 px-4 py-2 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-[color-mix(in_srgb,var(--pc-accent)_45%,#cbd5e1)]">
                 </form>
             @endauth
             <nav class="ml-auto flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-600 md:gap-2">
@@ -58,16 +58,26 @@
                             <p class="hidden px-3 py-6 text-center text-sm text-slate-500" data-bell-empty>You're all caught up.</p>
                         </div>
                     </div>
-                    <a href="{{ route('profile') }}" class="inline-flex max-w-[min(14rem,calc(100vw-10rem))] items-center gap-2 truncate rounded-full px-3 py-2 text-slate-700 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[16rem]" title="{{ auth()->user()->email }}" aria-label="Profile and account settings">
-                        <svg class="h-5 w-5 shrink-0 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                        </svg>
-                        <span class="truncate">{{ auth()->user()->name ?: auth()->user()->email }}</span>
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit" class="rounded-full px-3 py-2 text-slate-500 hover:bg-white/80 hover:text-slate-800">Log out</button>
-                    </form>
+                    <details id="pc-user-menu" class="group relative shrink-0">
+                        <summary class="pc-ring-focus inline-flex max-w-[min(14rem,calc(100vw-10rem))] cursor-pointer list-none items-center gap-2 truncate rounded-full border border-transparent px-2.5 py-1.5 text-slate-700 marker:content-none hover:border-slate-200/80 hover:bg-white/80 hover:text-[var(--pc-brand)] md:max-w-[16rem] [&::-webkit-details-marker]:hidden" title="{{ auth()->user()->email }}" aria-label="Account menu">
+                            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200/80">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                </svg>
+                            </span>
+                            <span class="truncate text-sm font-medium">{{ auth()->user()->name ?: auth()->user()->email }}</span>
+                            <svg class="hidden h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180 sm:block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            </svg>
+                        </summary>
+                        <div class="absolute right-0 z-[60] mt-2 w-48 origin-top-right rounded-2xl border border-slate-200/90 bg-white/95 py-1 shadow-xl backdrop-blur-sm" role="menu">
+                            <a href="{{ route('profile') }}" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50" role="menuitem">Profile</a>
+                            <form method="POST" action="{{ route('logout') }}" role="none">
+                                @csrf
+                                <button type="submit" class="block w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" role="menuitem">Log out</button>
+                            </form>
+                        </div>
+                    </details>
                 @else
                     <a href="{{ route('login') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Log in</a>
                     <a href="{{ route('register') }}" class="rounded-full px-3 py-2 hover:bg-white/80 hover:text-[var(--pc-brand)]">Sign up</a>
